@@ -1,0 +1,172 @@
+### Configuração de variáveis
+
+@baseUrl = http://localhost:3001
+@contentType = application/json
+
+### ==========================================
+
+### PROCEDURES DE AUTENTICAÇÃO (MUTATIONS)
+
+### ==========================================
+
+### 1. Enviar código de verificação por email
+
+POST {{baseUrl}}/rpc/auth.sendVerificationCode
+Content-Type: {{contentType}}
+
+{
+    "email": "utilizador@exemplo.com"
+}
+
+###
+
+### 2. Verificar código e fazer login
+
+POST {{baseUrl}}/rpc/auth.verifyCode
+Content-Type: {{contentType}}
+
+{
+    "email": "utilizador@exemplo.com",
+    "code": "123456"
+}
+
+###
+
+### 3. Refresh access token
+
+POST {{baseUrl}}/rpc/auth.refreshToken
+Content-Type: {{contentType}}
+
+{
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+
+###
+
+### 4. Logout
+
+POST {{baseUrl}}/rpc/auth.logout
+Content-Type: {{contentType}}
+
+{
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+
+### ==========================================
+
+### PROCEDURES DE QUERY (UTILIZADOR)
+
+### ==========================================
+
+### 5. Me (endpoint protegido) - GET com query string
+
+GET {{baseUrl}}/rpc/users.me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+### ==========================================
+
+### FLUXO COMPLETO DE TESTE
+
+### ==========================================
+
+### Passo 1: Enviar código para email de teste
+
+POST {{baseUrl}}/rpc/auth.sendVerificationCode
+Content-Type: {{contentType}}
+
+{
+    "email": "teste@vilela.com"
+}
+
+###
+
+### Passo 2: Verificar código (substituir pelo código recebido)
+
+POST {{baseUrl}}/rpc/auth.verifyCode
+Content-Type: {{contentType}}
+
+{
+    "email": "teste@vilela.com",
+    "code": "123456"
+}
+
+### ==========================================
+
+### Passo 3: Usar o me com token obtido do login
+
+GET {{baseUrl}}/rpc/users.me
+Authorization: Bearer TOKEN_AQUI
+
+### ==========================================
+
+### TESTES DE VALIDAÇÃO
+
+### ==========================================
+
+### Email inválido
+
+POST {{baseUrl}}/rpc/auth.sendVerificationCode
+Content-Type: {{contentType}}
+
+{
+    "email": "email-invalido"
+}
+
+###
+
+### Código muito curto
+
+POST {{baseUrl}}/rpc/auth.verifyCode
+Content-Type: {{contentType}}
+
+{
+    "email": "teste@vilela.com",
+    "code": "123"
+}
+
+###
+
+### Código muito longo
+
+POST {{baseUrl}}/rpc/auth.verifyCode
+Content-Type: {{contentType}}
+
+{
+    "email": "teste@vilela.com",
+    "code": "1234567"
+}
+
+###
+
+### Email em falta
+
+POST {{baseUrl}}/rpc/auth.sendVerificationCode
+Content-Type: {{contentType}}
+
+{
+    "email": ""
+}
+
+###
+
+### Refresh token inválido
+
+POST {{baseUrl}}/rpc/auth.refreshToken
+Content-Type: {{contentType}}
+
+{
+    "refreshToken": "token-invalido"
+}
+
+###
+
+### Me sem autorização
+
+GET {{baseUrl}}/rpc/users.me
+
+###
+
+### Me com token inválido
+
+GET {{baseUrl}}/rpc/users.me
+Authorization: Bearer token-invalido

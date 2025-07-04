@@ -1,0 +1,46 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Build outputs
+dist/
+build/
+.turbo/
+.next/
+out/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Generated files
+.tanstack/
+_generated/
+convex/_generated/
+apps/api/convex/_generated/
+
+# Lock files
+package-lock.json
+yarn.lock
+bun.lockb
+
+# Environment files
+.env*
+
+# Cache
+.cache/
+.vscode/
+.DS_Store
+
+# Coverage
+coverage/
+
+# Documentation
+CHANGELOG.md
+LICENSE
+
+# Config files that might be generated
+*.config.js
+*.config.mjs 

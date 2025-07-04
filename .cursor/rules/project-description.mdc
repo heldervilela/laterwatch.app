@@ -1,0 +1,27 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 📦 Project Description: AI Call Assistant (Inspired by heyrosie.com)
+
+This project is an AI-powered call assistant designed for small businesses.
+
+## 🧠 What it does:
+- Assigns a virtual phone number to each user
+- Receives calls on that number
+- Uses AI to transcribe the caller’s voice (STT)
+- Processes the conversation with LLMs (e.g., GPT)
+- Responds back via text-to-speech (TTS)
+- Fully automated secretary experience — like a smart voicemail with conversation
+
+## 🛠️ Tech Stack:
+- **Frontend:** React + Vite + TanStack Router + Tailwind CSS
+- **Backend:** Elysia + TRPC
+- **Database:** Convex
+- **Auth:** Email + Code or Google login
+- **AI:** Whisper, OpenAI (LLM), TTS
+- **Voice:** Integration with Twilio (or similar)
+
+## 🎯 Goal:
+To build a streamlined, privacy-conscious AI call assistant that helps small business owners handle calls automatically with natural, human-like responses.

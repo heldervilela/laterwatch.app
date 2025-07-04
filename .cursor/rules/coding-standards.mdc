@@ -1,0 +1,40 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Coding Standards
+
+**Description**: English naming standards and Portuguese localization guidelines  
+**Globs**: `*.ts`, `*.js`, `*.tsx`, `*.jsx`
+
+## English Naming
+
+1. **Functions**: camelCase, English only. E.g., `getUserInfo`, not `obterInfoUsuario`.
+2. **Variables**: camelCase, English. E.g., `cartTotal`, not `totalCarrinho`.
+3. **Comments**: English, clear intent. E.g.:
+
+```typescript
+// Fetch user data from API
+async function fetchUserData(id: string): Promise<User> {
+  return await api.get(`/users/${id}`);
+}
+```
+
+## Portuguese Localization
+
+4. **Portuguese Language**: Always use Portuguese from Portugal (PT-PT), not Brazilian Portuguese (PT-BR).
+   - Use "utilizador" instead of "usuário"
+   - Use "actualizar" instead of "atualizar"
+   - Use "início/término de sessão" instead of "login/logout"
+   - Use "demasiado" instead of "muito"
+   - Use "ecrã" instead of "tela"
+
+## Commit Messages
+
+5. **Commit Text**: Keep commit messages short and concise.
+   - ✅ Good: `feat: add user auth`
+   - ✅ Good: `fix: resolve login issue`
+   - ❌ Avoid: `feat: implement comprehensive user authentication system with email verification`
+   - Use conventional commits format: `type: brief description`
+   - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`

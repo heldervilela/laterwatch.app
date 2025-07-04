@@ -1,0 +1,39 @@
+{
+  "name": "@vilela/api",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "build": "bun build src/index.ts --outdir dist --target bun",
+    "start": "bun dist/index.js",
+    "lint": "echo 'Backend lint script will be configured later'",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "convex-deploy:dev": "npx convex dev",
+    "convex-deploy:prod": "npx convex deploy --prod",
+    "format": "prettier --write \"src/**/*.{ts,js,json}\" \"convex/**/*.{ts,js,json}\" \"!convex/_generated/**\"",
+    "format:check": "prettier --check \"src/**/*.{ts,js,json}\" \"convex/**/*.{ts,js,json}\" \"!convex/_generated/**\""
+  },
+  "dependencies": {
+    "@elysiajs/cors": "^0.8.0",
+    "@elysiajs/trpc": "^1.1.0",
+    "@elysiajs/websocket": "^0.2.8",
+    "@trpc/server": "^11.4.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "convex": "^1.24.8",
+    "elysia": "^1.3.5",
+    "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.518.0",
+    "resend": "^4.0.0",
+    "tailwind-merge": "^3.3.1",
+    "tw-animate-css": "^1.3.4",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "bun-types": "latest",
+    "@types/jsonwebtoken": "^9.0.5"
+  }
+}
