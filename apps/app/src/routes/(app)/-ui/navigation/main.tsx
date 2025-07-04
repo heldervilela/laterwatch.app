@@ -15,17 +15,17 @@ const items = [
     icon: LayoutDashboard,
   },
   {
-    title: "Chamadas",
+    title: "Calls",
     url: "#",
     icon: ListChecks,
   },
   {
-    title: "Mensagens",
+    title: "Messages",
     url: "#",
     icon: ListChecks,
   },
   {
-    title: "Integrações",
+    title: "Integrations",
     url: "#",
     icon: BarChart3,
   },

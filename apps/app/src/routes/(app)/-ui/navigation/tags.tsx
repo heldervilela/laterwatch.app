@@ -25,12 +25,12 @@ import {
 
 const items = [
   {
-    title: "Negócio",
+    title: "Business",
     url: "#",
     icon: FolderIcon,
   },
   {
-    title: "AI Agentes",
+    title: "AI Agents",
     url: "#",
     icon: BarChart,
   },

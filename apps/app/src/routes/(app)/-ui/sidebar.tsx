@@ -12,7 +12,6 @@ import {
 import { NavMain } from "./navigation/main";
 import { NavSecondary } from "./navigation/secondary";
 import { NavTags } from "./navigation/tags";
-import { NavUser } from "./navigation/user";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -27,10 +26,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <NavMain />
         <NavTags />
-        <NavSecondary className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser />
+        <NavSecondary />
       </SidebarFooter>
     </Sidebar>
   );
