@@ -3,25 +3,35 @@ description:
 globs: 
 alwaysApply: true
 ---
-# 📦 Project Description: AI Call Assistant (Inspired by heyrosie.com)
+# Project Overview
 
-This project is an AI-powered call assistant designed for small businesses.
+This is a macOS mini-app to collect and save YouTube/Twitter links for watching later, avoiding browser tab overload.
 
-## 🧠 What it does:
-- Assigns a virtual phone number to each user
-- Receives calls on that number
-- Uses AI to transcribe the caller’s voice (STT)
-- Processes the conversation with LLMs (e.g., GPT)
-- Responds back via text-to-speech (TTS)
-- Fully automated secretary experience — like a smart voicemail with conversation
+The project is structured as a **TurboRepo monorepo** with two packages:
 
-## 🛠️ Tech Stack:
-- **Frontend:** React + Vite + TanStack Router + Tailwind CSS
-- **Backend:** Elysia + TRPC
-- **Database:** Convex
-- **Auth:** Email + Code or Google login
-- **AI:** Whisper, OpenAI (LLM), TTS
-- **Voice:** Integration with Twilio (or similar)
+## 📦 `api/`
+- Database: **Convex**
+- Backend framework: **ElysiaJS**
+- API layer: **tRPC**
 
-## 🎯 Goal:
-To build a streamlined, privacy-conscious AI call assistant that helps small business owners handle calls automatically with natural, human-like responses.
+## 🧩 `app/`
+- Desktop app: **Tauri v2**, built with **Vite** and styled using **TailwindCSS**
+- Data fetching: **TanStack Query**
+- UI components: **Shadcn**
+- Client-side routing: **TanStack Router**
+
+---
+
+# Coding & Comments
+
+- **All code and comments MUST be written in English**, regardless of communication language.
+- Use consistent code style across `api/` and `app/`, following your usual TypeScript + Tailwind conventions.
+- When referring to “the app”, “the project”, or “the application”, treat it as this specific macOS link-saver.
+
+---
+
+# Usage Guidelines
+
+- Apply this rule globally across the project: `alwaysApply: true`
+- Cursor will automatically include this context in all chat and inline edit interactions.
+- Use this context to generate code, create new features, or refactor existing logic.
