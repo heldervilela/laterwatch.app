@@ -1,0 +1,26 @@
+# Build outputs
+dist/
+node_modules/
+.next/
+.turbo/
+
+# API files - não processar no frontend
+../api/
+../../apps/api/
+**/api/
+../../../api/
+
+# Type definitions
+**/*.d.ts
+
+# Config files que não precisam de lint
+*.config.js
+*.config.ts
+vite.config.ts
+tailwind.config.ts
+
+# Logs
+*.log
+
+# Cache
+.eslintcache 
