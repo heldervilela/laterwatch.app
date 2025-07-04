@@ -1,7 +1,7 @@
 import { TRPCError } from '@trpc/server'
-import { publicProcedure } from '../../trpc/procedures'
-import { sendCodeSchema, verifyCodeSchema, refreshTokenSchema } from './schemas'
 import { authService } from '../../services/authService'
+import { publicProcedure } from '../../trpc/procedures'
+import { refreshTokenSchema, sendCodeSchema, verifyCodeSchema } from './schemas'
 
 /*
  * Send verification code by email - simplified version
@@ -16,13 +16,13 @@ export const sendVerificationCode = publicProcedure
       console.log('[API][SendVerificationCode] Error:', result.messageKey)
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: ctx.t(result.messageKey),
+        message: result.messageKey,
       })
     }
 
     return {
       success: true,
-      message: ctx.t(result.messageKey),
+      message: result.messageKey,
       email: input.email,
     }
   })
@@ -43,13 +43,13 @@ export const verifyCode = publicProcedure
       console.log('[API][VerifyCode] Error:', result.messageKey)
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: ctx.t(result.messageKey),
+        message: result.messageKey,
       })
     }
 
     return {
       success: true,
-      message: ctx.t(result.messageKey),
+      message: result.messageKey,
       tokens: result.tokens,
       user: result.user,
       isNewUser: result.isNewUser,
@@ -69,13 +69,13 @@ export const refreshToken = publicProcedure
       console.log('[API][RefreshToken] Error:', result.messageKey)
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: ctx.t(result.messageKey),
+        message: result.messageKey,
       })
     }
 
     return {
       success: true,
-      message: ctx.t(result.messageKey),
+      message: result.messageKey,
       accessToken: result.accessToken,
     }
   })
@@ -92,13 +92,13 @@ export const logout = publicProcedure.input(refreshTokenSchema).mutation(async (
 
     return {
       success: true,
-      message: ctx.t('auth.success.logoutSuccess'),
+      message: 'auth.success.logoutSuccess',
     }
   } catch (error) {
     console.error('[API][Logout] Error:', error)
     throw new TRPCError({
       code: 'INTERNAL_SERVER_ERROR',
-      message: ctx.t('auth.errors.serverError'),
+      message: 'auth.errors.serverError',
     })
   }
 })

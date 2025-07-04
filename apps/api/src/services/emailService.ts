@@ -20,30 +20,30 @@ class EmailService {
       const { data, error } = await this.resend.emails.send({
         from: process.env.FROM_EMAIL || 'Vilela.Ai <support@vilela.ai>',
         to: [email],
-        subject: 'Código de Verificação - Vilela AI',
+        subject: 'Verification Code - Vilela AI',
         html: this.getVerificationEmailTemplate(code),
       })
 
       if (error) {
         console.error('[Error][EmailService] Error sending email:', error)
-        throw new Error('Falha ao enviar email de verificação')
+        throw new Error('Failed to send verification email')
       }
 
       console.log('[EmailService] Email sent successfully:', data?.id)
     } catch (error) {
       console.error('[Error][EmailService] Error sending email:', error)
-      throw new Error('Falha ao enviar email de verificação')
+      throw new Error('Failed to send verification email')
     }
   }
 
   private getVerificationEmailTemplate(code: string): string {
     return `
       <!DOCTYPE html>
-      <html lang="pt-BR">
+      <html lang="en">
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Código de Verificação</title>
+        <title>Verification Code</title>
       </head>
       <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc;">
         <div style="max-width: 600px; margin: 0 auto; background-color: white; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
@@ -55,11 +55,11 @@ class EmailService {
           <!-- Content -->
           <div style="padding: 40px 30px;">
             <h2 style="color: #1a202c; margin: 0 0 20px 0; font-size: 24px; font-weight: 600;">
-              Código de Verificação
+              Verification Code
             </h2>
             
             <p style="color: #4a5568; margin: 0 0 30px 0; font-size: 16px; line-height: 1.5;">
-              Olá! Use o código abaixo para acessar sua conta no Vilela AI:
+              Hello! Use the code below to access your Vilela AI account:
             </p>
             
             <!-- Code Box -->
@@ -71,19 +71,19 @@ class EmailService {
             
             <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 15px; margin: 30px 0;">
               <p style="color: #856404; margin: 0; font-size: 14px;">
-                ⏰ <strong>Este código expira em 10 minutos</strong>
+                ⏰ <strong>This code expires in 10 minutes</strong>
               </p>
             </div>
             
             <p style="color: #718096; margin: 30px 0 0 0; font-size: 14px; line-height: 1.5;">
-              Se você não solicitou este código, pode ignorar este email com segurança.
+              If you didn't request this code, you can safely ignore this email.
             </p>
           </div>
           
           <!-- Footer -->
           <div style="background: #f8fafc; padding: 20px 30px; border-top: 1px solid #e2e8f0;">
             <p style="color: #a0aec0; margin: 0; font-size: 12px; text-align: center;">
-              © ${new Date().getFullYear()} Vilela AI. Todos os direitos reservados.
+              © ${new Date().getFullYear()} Vilela AI. All rights reserved.
             </p>
           </div>
         </div>
@@ -92,37 +92,37 @@ class EmailService {
     `
   }
 
-  // Método para envio de email de boas-vindas (opcional)
+  // Optional welcome email method
   async sendWelcomeEmail(email: string, name?: string): Promise<void> {
     try {
       const { data, error } = await this.resend.emails.send({
         from: process.env.FROM_EMAIL || 'Vilela AI <onboarding@resend.dev>',
         to: [email],
-        subject: 'Bem-vindo ao Vilela AI! 🚀',
-        html: this.getWelcomeEmailTemplate(name || 'Usuário'),
+        subject: 'Welcome to Vilela AI! 🚀',
+        html: this.getWelcomeEmailTemplate(name || 'User'),
       })
 
       if (error) {
-        console.error('Erro ao enviar email de boas-vindas:', error)
-        // Não lançar erro aqui para não quebrar o fluxo de auth
+        console.error('Error sending welcome email:', error)
+        // Don't throw error here to avoid breaking auth flow
         return
       }
 
-      console.log('Email de boas-vindas enviado:', data?.id)
+      console.log('Welcome email sent:', data?.id)
     } catch (error) {
-      console.error('Erro ao enviar email de boas-vindas:', error)
-      // Não lançar erro aqui para não quebrar o fluxo de auth
+      console.error('Error sending welcome email:', error)
+      // Don't throw error here to avoid breaking auth flow
     }
   }
 
   private getWelcomeEmailTemplate(name: string): string {
     return `
       <!DOCTYPE html>
-      <html lang="pt-BR">
+      <html lang="en">
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Bem-vindo ao Vilela AI</title>
+        <title>Welcome to Vilela AI</title>
       </head>
       <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc;">
         <div style="max-width: 600px; margin: 0 auto; background-color: white; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
@@ -134,35 +134,35 @@ class EmailService {
           <!-- Content -->
           <div style="padding: 40px 30px;">
             <h2 style="color: #1a202c; margin: 0 0 20px 0; font-size: 24px; font-weight: 600;">
-              Bem-vindo, ${name}! 🎉
+              Welcome, ${name}! 🎉
             </h2>
             
             <p style="color: #4a5568; margin: 0 0 20px 0; font-size: 16px; line-height: 1.5;">
-              Obrigado por se juntar ao Vilela AI! Agora você pode:
+              Thank you for joining Vilela AI! Now you can:
             </p>
             
             <ul style="color: #4a5568; margin: 20px 0; padding-left: 20px;">
-              <li style="margin-bottom: 10px;">🎤 Iniciar chamadas com transcrição em tempo real</li>
-              <li style="margin-bottom: 10px;">🤖 Gerar respostas inteligentes com IA</li>
-              <li style="margin-bottom: 10px;">📊 Acompanhar suas conversas e métricas</li>
+              <li style="margin-bottom: 10px;">🎤 Start calls with real-time transcription</li>
+              <li style="margin-bottom: 10px;">🤖 Generate intelligent responses with AI</li>
+              <li style="margin-bottom: 10px;">📊 Track your conversations and metrics</li>
             </ul>
             
             <div style="text-align: center; margin: 40px 0;">
               <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}" 
                  style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 15px 30px; border-radius: 8px; font-weight: 600; display: inline-block;">
-                Começar Agora
+                Get Started
               </a>
             </div>
             
             <p style="color: #718096; margin: 30px 0 0 0; font-size: 14px; line-height: 1.5;">
-              Se tiver dúvidas, responda este email. Estamos aqui para ajudar!
+              If you have any questions, reply to this email. We're here to help!
             </p>
           </div>
           
           <!-- Footer -->
           <div style="background: #f8fafc; padding: 20px 30px; border-top: 1px solid #e2e8f0;">
             <p style="color: #a0aec0; margin: 0; font-size: 12px; text-align: center;">
-              © ${new Date().getFullYear()} Vilela AI. Todos os direitos reservados.
+              © ${new Date().getFullYear()} Vilela AI. All rights reserved.
             </p>
           </div>
         </div>

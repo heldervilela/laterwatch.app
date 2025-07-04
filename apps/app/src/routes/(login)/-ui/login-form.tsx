@@ -81,24 +81,16 @@ export function LoginForm({
           <form onSubmit={handleSendCode}>
             <div className="flex flex-col gap-6">
               <div className="flex flex-col items-center gap-2">
-                {form === "login" && (
-                  <div className="flex size-8 items-center justify-center rounded-md">
-                    <BrandIconSmall className="size-6" />
-                  </div>
-                )}
+                <div className="flex size-8 items-center justify-center rounded-md">
+                  <BrandIconSmall className="size-8" />
+                </div>
+
                 <h1 className="text-xl font-bold">
                   {form === "login" ? "Welcome back" : "Create an account"}
                 </h1>
                 <div className="text-center text-sm">
-                  {form === "login"
-                    ? "Don't have an account? "
-                    : "Already have an account? "}
-                  <Link
-                    to={form === "login" ? "/signup" : "/login"}
-                    className="underline underline-offset-4"
-                  >
-                    {form === "login" ? "Sign up" : "Sign in"}
-                  </Link>
+                  Don't have an account? <br />
+                  Don't worry, we'll create one if it doesn't exist.
                 </div>
               </div>
               <div className="flex flex-col gap-6">
