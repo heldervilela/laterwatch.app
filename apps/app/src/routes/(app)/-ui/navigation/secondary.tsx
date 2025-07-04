@@ -49,13 +49,16 @@ export function NavSecondary({
   return (
     <SidebarGroup {...props}>
       <SidebarGroupContent>
-        <SidebarMenu>
+        <SidebarMenu className="gap-1">
           {/* Settings with dropdown */}
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton>
-                  <Settings />
+                <SidebarMenuButton
+                  size="sm"
+                  className="text-muted-foreground hover:text-foreground text-xs"
+                >
+                  <Settings className="size-3.5" />
                   <span>Settings</span>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
@@ -101,9 +104,13 @@ export function NavSecondary({
           {/* Other items */}
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild>
+              <SidebarMenuButton
+                asChild
+                size="sm"
+                className="text-muted-foreground hover:text-foreground text-xs"
+              >
                 <a href={item.url}>
-                  <item.icon />
+                  <item.icon className="size-3.5" />
                   <span>{item.title}</span>
                 </a>
               </SidebarMenuButton>
@@ -112,9 +119,13 @@ export function NavSecondary({
 
           {/* Logout item */}
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton
+              asChild
+              size="sm"
+              className="text-muted-foreground hover:text-foreground text-xs"
+            >
               <a href="#">
-                <LogOut />
+                <LogOut className="size-3.5" />
                 <span>Log out</span>
               </a>
             </SidebarMenuButton>

@@ -1,10 +1,4 @@
-import {
-  BarChart,
-  FolderIcon,
-  MoreHorizontal,
-  Share2,
-  Trash2,
-} from "lucide-react";
+import { FolderIcon, MoreHorizontal, Share2, Trash2 } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -27,12 +21,12 @@ const items = [
   {
     title: "Business",
     url: "#",
-    icon: FolderIcon,
+    //icon: FolderIcon,
   },
   {
     title: "AI Agents",
     url: "#",
-    icon: BarChart,
+    //icon: BarChart,
   },
 ];
 
@@ -47,7 +41,7 @@ export function NavTags() {
           <SidebarMenuItem key={item.title}>
             <SidebarMenuButton asChild>
               <a href={item.url}>
-                <item.icon />
+                {/* <item.icon /> */}
                 <span>{item.title}</span>
               </a>
             </SidebarMenuButton>

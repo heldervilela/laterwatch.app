@@ -43,7 +43,7 @@ function AppLayout() {
     <SidebarProvider
       style={
         {
-          "--sidebar-width": "calc(230px)",
+          "--sidebar-width": "calc(190px)",
           "--header-height": "calc(var(--spacing) * 12)",
         } as React.CSSProperties
       }

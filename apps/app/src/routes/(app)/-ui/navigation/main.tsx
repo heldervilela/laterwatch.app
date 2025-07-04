@@ -1,4 +1,4 @@
-import { BarChart3, LayoutDashboard, ListChecks } from "lucide-react";
+import { Archive, LayoutGrid, StarIcon } from "lucide-react";
 
 import {
   SidebarGroup,
@@ -10,24 +10,19 @@ import {
 
 const items = [
   {
-    title: "Dashboard",
+    title: "Feed",
     url: "#",
-    icon: LayoutDashboard,
+    icon: LayoutGrid,
   },
   {
-    title: "Calls",
+    title: "Favorites",
     url: "#",
-    icon: ListChecks,
+    icon: StarIcon,
   },
   {
-    title: "Messages",
+    title: "Archive",
     url: "#",
-    icon: ListChecks,
-  },
-  {
-    title: "Integrations",
-    url: "#",
-    icon: BarChart3,
+    icon: Archive,
   },
 ];
 
