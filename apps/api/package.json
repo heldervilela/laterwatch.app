@@ -10,8 +10,8 @@
     "lint": "echo 'Backend lint script will be configured later'",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist",
-    "convex-deploy:dev": "npx convex dev",
-    "convex-deploy:prod": "npx convex deploy --prod",
+    "convex:deploy:dev": "npx convex dev",
+    "convex:deploy:prod": "npx convex deploy --prod",
     "format": "prettier --write \"src/**/*.{ts,js,json}\" \"convex/**/*.{ts,js,json}\" \"!convex/_generated/**\"",
     "format:check": "prettier --check \"src/**/*.{ts,js,json}\" \"convex/**/*.{ts,js,json}\" \"!convex/_generated/**\""
   },

@@ -15,10 +15,8 @@ import type {
 } from "convex/server";
 import type * as crons_cleanupTasks from "../crons/cleanupTasks.js";
 import type * as crons from "../crons.js";
-import type * as db_agents from "../db/agents.js";
 import type * as db_auth_authCodes from "../db/auth/authCodes.js";
 import type * as db_auth_refreshTokens from "../db/auth/refreshTokens.js";
-import type * as db_businesses from "../db/businesses.js";
 import type * as db_users from "../db/users.js";
 
 /**
@@ -32,10 +30,8 @@ import type * as db_users from "../db/users.js";
 declare const fullApi: ApiFromModules<{
   "crons/cleanupTasks": typeof crons_cleanupTasks;
   crons: typeof crons;
-  "db/agents": typeof db_agents;
   "db/auth/authCodes": typeof db_auth_authCodes;
   "db/auth/refreshTokens": typeof db_auth_refreshTokens;
-  "db/businesses": typeof db_businesses;
   "db/users": typeof db_users;
 }>;
 export declare const api: FilterApi<
