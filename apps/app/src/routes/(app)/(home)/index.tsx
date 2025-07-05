@@ -69,13 +69,6 @@ function AppDashboard() {
   return (
     <PageContent title="Dashboard">
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold"></h2>
-          <p className="text-muted-foreground text-sm">
-            {videos.length} video{videos.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-
         {videos.length === 0 ? (
           <div className="flex min-h-[400px] flex-col items-center justify-center gap-2 text-center">
             <Video className="text-muted-foreground h-16 w-16" />
