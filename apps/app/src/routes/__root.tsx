@@ -16,7 +16,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 function RootComponent() {
   return (
-    <div className="min-h-screen">
+    <div className="window-rounded min-h-screen">
       <WindowControls />
 
       <Outlet />
