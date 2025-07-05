@@ -55,9 +55,17 @@ export default defineSchema({
 
     url: v.string(),
     title: v.optional(v.string()),
+    description: v.optional(v.string()),
     thumbnail: v.optional(v.string()),
     platform: v.optional(v.string()),
     videoId: v.optional(v.string()),
+
+    // YouTube specific fields
+    channelTitle: v.optional(v.string()),
+    duration: v.optional(v.string()),
+    publishedAt: v.optional(v.string()),
+    viewCount: v.optional(v.string()),
+    likeCount: v.optional(v.string()),
 
     tagIds: v.optional(v.array(v.id('tags'))), // ← mais simples
 

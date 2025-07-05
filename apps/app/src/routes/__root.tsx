@@ -1,3 +1,4 @@
+import { Toaster } from "@/ui/base/sonner"
 import { QueryClient } from "@tanstack/react-query"
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router"
 
@@ -19,6 +20,7 @@ function RootComponent() {
       <WindowControls />
 
       <Outlet />
+      <Toaster position="top-center" richColors />
       {/* <TanStackRouterDevtools position="bottom-right" /> */}
     </div>
   )

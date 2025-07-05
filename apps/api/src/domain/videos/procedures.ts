@@ -1,7 +1,27 @@
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import { api, convexClient, type Id } from '../../lib/convex'
+import { youtubeService } from '../../services/youtubeService'
 import { protectedProcedure } from '../../trpc/procedures'
+
+// Extended video data type for internal use
+interface ExtendedVideoData {
+  url: string
+  title?: string
+  description?: string
+  thumbnail?: string
+  platform?: string
+  videoId?: string
+  channelTitle?: string
+  duration?: string
+  publishedAt?: string
+  viewCount?: string
+  likeCount?: string
+  tagNames?: string[]
+  isFavorite?: boolean
+  isArchived?: boolean
+  isWatched?: boolean
+}
 
 /*
  * Create a new video
@@ -22,9 +42,75 @@ export const createVideo = protectedProcedure
   )
   .mutation(async ({ input, ctx }) => {
     try {
+      let videoData: ExtendedVideoData = { ...input }
+
+      // Detect platform and fetch details for YouTube videos
+      if (!videoData.platform) {
+        if (youtubeService.isValidYouTubeUrl(input.url)) {
+          videoData.platform = 'youtube'
+        }
+      }
+
+      // Fetch YouTube video details if it's a YouTube URL
+      if (videoData.platform === 'youtube' || youtubeService.isValidYouTubeUrl(input.url)) {
+        try {
+          console.log('[API][CreateVideo] Fetching YouTube details for:', input.url)
+
+          const youtubeDetails = await youtubeService.getVideoDetails(input.url)
+
+          if (youtubeDetails) {
+            // Override with fetched details, but keep user-provided values if they exist
+            videoData = {
+              ...videoData,
+              title: videoData.title || youtubeDetails.title,
+              thumbnail: videoData.thumbnail || youtubeDetails.thumbnail,
+              platform: 'youtube',
+              videoId: youtubeDetails.id,
+              description: youtubeDetails.description,
+              channelTitle: youtubeDetails.channelTitle,
+              duration: youtubeDetails.duration,
+              publishedAt: youtubeDetails.publishedAt,
+              viewCount: youtubeDetails.viewCount,
+              likeCount: youtubeDetails.likeCount,
+            }
+
+            // Add tags from YouTube if no tags provided by user
+            if (!videoData.tagNames && youtubeDetails.tags && youtubeDetails.tags.length > 0) {
+              // Take first 3 tags to avoid too many
+              videoData.tagNames = youtubeDetails.tags.slice(0, 3)
+            }
+
+            console.log('[API][CreateVideo] YouTube details fetched successfully')
+          }
+        } catch (youtubeError) {
+          console.warn('[API][CreateVideo] Failed to fetch YouTube details:', youtubeError)
+
+          // Fallback to basic info
+          const basicInfo = youtubeService.getBasicVideoInfo(input.url)
+          if (basicInfo) {
+            videoData.platform = basicInfo.platform
+            videoData.videoId = basicInfo.videoId
+          }
+        }
+      }
+
       const result = await convexClient.mutation(api.db.videos.createVideo, {
         userId: ctx.user.id,
-        ...input,
+        url: videoData.url,
+        title: videoData.title,
+        description: videoData.description,
+        thumbnail: videoData.thumbnail,
+        platform: videoData.platform,
+        videoId: videoData.videoId,
+        channelTitle: videoData.channelTitle,
+        duration: videoData.duration,
+        publishedAt: videoData.publishedAt,
+        viewCount: videoData.viewCount,
+        likeCount: videoData.likeCount,
+        tagNames: videoData.tagNames,
+        isFavorite: videoData.isFavorite,
+        isArchived: videoData.isArchived,
+        isWatched: videoData.isWatched,
       })
 
       if (!result.success) {

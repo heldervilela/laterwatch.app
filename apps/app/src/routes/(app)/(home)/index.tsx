@@ -1,17 +1,9 @@
 import { api } from "@/services/api"
-import { Card, CardContent, CardHeader, CardTitle } from "@/ui/base/card"
 import { Skeleton } from "@/ui/base/skeleton"
+import { VideoCard } from "@/ui/shared/video-card"
 import { useQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
-import {
-  Archive,
-  Calendar,
-  ExternalLink,
-  Eye,
-  Heart,
-  Tag,
-  Video,
-} from "lucide-react"
+import { Video } from "lucide-react"
 
 import { PageContent } from "../-ui/content"
 
@@ -33,17 +25,18 @@ function AppDashboard() {
   if (isLoading) {
     return (
       <PageContent title="Dashboard">
-        <div className="grid gap-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader className="space-y-2">
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-3 w-1/2" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-3 w-full" />
-              </CardContent>
-            </Card>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div
+              key={i}
+              className="overflow-hidden rounded-lg bg-white shadow-sm"
+            >
+              <Skeleton className="aspect-video w-full" />
+              <div className="p-3">
+                <Skeleton className="mb-2 h-4 w-full" />
+                <Skeleton className="h-3 w-2/3" />
+              </div>
+            </div>
           ))}
         </div>
       </PageContent>
@@ -73,75 +66,14 @@ function AppDashboard() {
           <div className="flex min-h-[400px] flex-col items-center justify-center gap-2 text-center">
             <Video className="text-muted-foreground h-16 w-16" />
             <h3 className="text-lg font-semibold">No saved videos</h3>
+            <p className="text-muted-foreground">
+              Add some YouTube videos to get started!
+            </p>
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {videos.map((video) => (
-              <Card
-                key={video._id}
-                className="transition-shadow hover:shadow-md"
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-base leading-snug">
-                        {video.title || "Untitled video"}
-                      </CardTitle>
-                      <div className="text-muted-foreground mt-2 flex items-center gap-2 text-sm">
-                        <Calendar className="h-3 w-3" />
-                        <span>
-                          {new Date(video.addedAt).toLocaleDateString("en-US", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
-                        {video.platform && (
-                          <>
-                            <span>•</span>
-                            <span className="capitalize">{video.platform}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div className="ml-4 flex items-center gap-2">
-                      {video.isFavorite && (
-                        <Heart className="h-4 w-4 fill-red-500 text-red-500" />
-                      )}
-                      {video.isArchived && (
-                        <Archive className="text-muted-foreground h-4 w-4" />
-                      )}
-                      {video.isWatched && (
-                        <Eye className="h-4 w-4 text-green-500" />
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="flex items-center justify-between">
-                    <a
-                      href={video.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                      Watch video
-                    </a>
-                    {video.tagIds && video.tagIds.length > 0 && (
-                      <div className="text-muted-foreground flex items-center gap-1 text-xs">
-                        <Tag className="h-3 w-3" />
-                        <span>
-                          {video.tagIds.length} tag
-                          {video.tagIds.length !== 1 ? "s" : ""}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+              <VideoCard key={video._id} video={video} />
             ))}
           </div>
         )}
