@@ -1,35 +1,34 @@
-import * as React from "react";
+import { Sidebar, SidebarContent, SidebarFooter } from "@/ui/base/sidebar"
+import * as React from "react"
 
-import { BrandIconSmall } from "@/ui/assets/brand-icon-small";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-} from "@/ui/base/sidebar";
-import { NavMain } from "./navigation/main";
-import { NavSecondary } from "./navigation/secondary";
-import { NavTags } from "./navigation/tags";
+import { NavMain } from "./navigation/main"
+import { NavSecondary } from "./navigation/secondary"
+import { NavTags } from "./navigation/tags"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader>
+    <div>
+      <Sidebar collapsible="offcanvas" {...props}>
+        {/* <SidebarHeader className="bg-red-500">
         <SidebarMenu>
           <SidebarMenuItem>
-            <BrandIconSmall className="size-7 ml-2" />
+            <BrandIconSmall className="ml-2 size-7" />
           </SidebarMenuItem>
         </SidebarMenu>
-      </SidebarHeader>
-      <SidebarContent>
-        <NavMain />
-        <NavTags />
-      </SidebarContent>
-      <SidebarFooter>
-        <NavSecondary />
-      </SidebarFooter>
-    </Sidebar>
-  );
+      </SidebarHeader> */}
+
+        <SidebarContent className="pt-8">
+          <NavMain />
+          <NavTags />
+        </SidebarContent>
+
+        <SidebarFooter>
+          {/* <SidebarMenuItem>
+            <BrandIconSmall className="ml-4 size-7" />
+          </SidebarMenuItem> */}
+          <NavSecondary />
+        </SidebarFooter>
+      </Sidebar>
+    </div>
+  )
 }

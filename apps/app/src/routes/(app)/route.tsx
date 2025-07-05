@@ -1,25 +1,26 @@
-import { authMiddleware } from "@/routes/-middleware/auth";
-import { SidebarInset, SidebarProvider } from "@/ui/base/sidebar";
-import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { api } from "../../services/api";
-import { AppSidebar } from "./-ui/sidebar";
+import { authMiddleware } from "@/routes/-middleware/auth"
+import { SidebarInset, SidebarProvider } from "@/ui/base/sidebar"
+import { useQuery } from "@tanstack/react-query"
+import { createFileRoute, Outlet } from "@tanstack/react-router"
+
+import { api } from "../../services/api"
+import { AppSidebar } from "./-ui/sidebar"
 
 export const Route = createFileRoute("/(app)")({
   beforeLoad: async ({ location }) => {
-    await authMiddleware(location);
+    await authMiddleware(location)
   },
   component: AppLayout,
-});
+})
 
 function AppLayout() {
   const { data: userResponse } = useQuery({
     queryKey: ["user", "me"],
     queryFn: () => api.users.me.query(),
     staleTime: 5 * 60 * 1000,
-  });
+  })
 
-  console.log("User data:", userResponse); // Para usar a variável
+  console.log("User data:", userResponse) // Para usar a variável
 
   // Função de logout disponível mas não utilizada ainda
   // const handleLogout = async () => {
@@ -40,18 +41,20 @@ function AppLayout() {
   // const user = userResponse?.user
 
   return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "calc(190px)",
-          "--header-height": "calc(var(--spacing) * 12)",
-        } as React.CSSProperties
-      }
-    >
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <Outlet />
-      </SidebarInset>
-    </SidebarProvider>
-  );
+    <div className="flex h-screen flex-col">
+      <SidebarProvider
+        style={
+          {
+            "--sidebar-width": "calc(190px)",
+            "--header-height": "calc(var(--spacing) * 12)",
+          } as React.CSSProperties
+        }
+      >
+        <AppSidebar variant="floating" />
+        <SidebarInset>
+          <Outlet />
+        </SidebarInset>
+      </SidebarProvider>
+    </div>
+  )
 }

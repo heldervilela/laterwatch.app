@@ -3,6 +3,7 @@ import { createRootRouteWithContext, Outlet } from "@tanstack/react-router"
 import { TanStackRouterDevtools } from "@tanstack/router-devtools"
 
 import { ErrorPageFallback } from "./-ui/error-page-fallback"
+import { WindowControls } from "./-ui/window-controls"
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -16,6 +17,8 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 function RootComponent() {
   return (
     <div className="min-h-screen">
+      <WindowControls />
+
       <Outlet />
       <TanStackRouterDevtools position="bottom-right" />
     </div>
