@@ -1,12 +1,11 @@
-import { Archive, LayoutGrid, StarIcon } from "lucide-react";
-
 import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/ui/base/sidebar";
+} from "@/ui/base/sidebar"
+import { Archive, LayoutGrid, StarIcon } from "lucide-react"
 
 const items = [
   {
@@ -24,7 +23,7 @@ const items = [
     url: "#",
     icon: Archive,
   },
-];
+]
 
 export function NavMain() {
   return (
@@ -34,7 +33,10 @@ export function NavMain() {
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title}>
+              <SidebarMenuButton
+                tooltip={item.title}
+                className="cursor-pointer"
+              >
                 {item.icon && <item.icon />}
                 <span>{item.title}</span>
               </SidebarMenuButton>
@@ -43,5 +45,5 @@ export function NavMain() {
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
-  );
+  )
 }

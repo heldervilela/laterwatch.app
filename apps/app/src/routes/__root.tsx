@@ -1,6 +1,5 @@
 import { QueryClient } from "@tanstack/react-query"
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router"
-import { TanStackRouterDevtools } from "@tanstack/router-devtools"
 
 import { ErrorPageFallback } from "./-ui/error-page-fallback"
 import { WindowControls } from "./-ui/window-controls"
@@ -20,7 +19,7 @@ function RootComponent() {
       <WindowControls />
 
       <Outlet />
-      <TanStackRouterDevtools position="bottom-right" />
+      {/* <TanStackRouterDevtools position="bottom-right" /> */}
     </div>
   )
 }

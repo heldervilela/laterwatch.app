@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, Outlet } from "@tanstack/react-router"
 
 import { api } from "../../services/api"
+import { FloatingActionButton } from "./-ui/floating-action-button"
 import { AppSidebar } from "./-ui/sidebar"
 
 export const Route = createFileRoute("/(app)")({
@@ -55,6 +56,8 @@ function AppLayout() {
           <Outlet />
         </SidebarInset>
       </SidebarProvider>
+
+      <FloatingActionButton />
     </div>
   )
 }
