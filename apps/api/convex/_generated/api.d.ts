@@ -17,7 +17,9 @@ import type * as crons_cleanupTasks from "../crons/cleanupTasks.js";
 import type * as crons from "../crons.js";
 import type * as db_auth_authCodes from "../db/auth/authCodes.js";
 import type * as db_auth_refreshTokens from "../db/auth/refreshTokens.js";
+import type * as db_tags from "../db/tags.js";
 import type * as db_users from "../db/users.js";
+import type * as db_videos from "../db/videos.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -32,7 +34,9 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   "db/auth/authCodes": typeof db_auth_authCodes;
   "db/auth/refreshTokens": typeof db_auth_refreshTokens;
+  "db/tags": typeof db_tags;
   "db/users": typeof db_users;
+  "db/videos": typeof db_videos;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

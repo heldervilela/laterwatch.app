@@ -1,0 +1,150 @@
+### Configuração de variáveis
+
+@baseUrl = http://localhost:3001
+@contentType = application/json
+@authToken = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+### ==========================================
+
+### PROCEDURES DE TAGS
+
+### ==========================================
+
+### 1. Criar nova tag
+
+POST {{baseUrl}}/rpc/tags.createTag
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+{
+    "name": "tutorial",
+    "color": "#3b82f6"
+}
+
+###
+
+### 2. Atualizar tag
+
+POST {{baseUrl}}/rpc/tags.updateTag
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+{
+    "tagId": "TAG_ID_AQUI",
+    "name": "tutorial-updated",
+    "color": "#ef4444"
+}
+
+###
+
+### 3. Apagar tag
+
+POST {{baseUrl}}/rpc/tags.deleteTag
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+{
+    "tagId": "TAG_ID_AQUI"
+}
+
+###
+
+### 4. Obter tags do utilizador
+
+GET {{baseUrl}}/rpc/tags.getUserTags
+Authorization: {{authToken}}
+
+### ==========================================
+
+### EXEMPLOS DE TESTE
+
+### ==========================================
+
+### Tag sem cor
+
+POST {{baseUrl}}/rpc/tags.createTag
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+{
+    "name": "music"
+}
+
+###
+
+### Tag com cor personalizada
+
+POST {{baseUrl}}/rpc/tags.createTag
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+{
+    "name": "tech",
+    "color": "#10b981"
+}
+
+###
+
+### Atualizar apenas o nome
+
+POST {{baseUrl}}/rpc/tags.updateTag
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+{
+    "tagId": "TAG_ID_AQUI",
+    "name": "tech-updated"
+}
+
+###
+
+### Atualizar apenas a cor
+
+POST {{baseUrl}}/rpc/tags.updateTag
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+{
+    "tagId": "TAG_ID_AQUI",
+    "color": "#f59e0b"
+}
+
+### ==========================================
+
+### TESTES DE VALIDAÇÃO
+
+### ==========================================
+
+### Nome muito longo (deve dar erro)
+
+POST {{baseUrl}}/rpc/tags.createTag
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+{
+    "name": "Esta é uma tag com nome muito longo que deve dar erro de validação"
+}
+
+###
+
+### Nome vazio (deve dar erro)
+
+POST {{baseUrl}}/rpc/tags.createTag
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+{
+    "name": ""
+}
+
+###
+
+### Tag duplicada (deve dar erro)
+
+POST {{baseUrl}}/rpc/tags.createTag
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+{
+    "name": "tutorial"
+} 

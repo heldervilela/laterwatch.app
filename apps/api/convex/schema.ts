@@ -46,4 +46,40 @@ export default defineSchema({
     .index('by_token', ['token']) // Index para busca rápida por token
     .index('by_user', ['userId']) // Index para buscar tokens de um usuário
     .index('by_expiry', ['expiresAt']), // Index para limpeza de tokens expirados
+
+  /*
+   * Videos
+   */
+  videos: defineTable({
+    userId: v.id('users'),
+
+    url: v.string(),
+    title: v.optional(v.string()),
+    thumbnail: v.optional(v.string()),
+    platform: v.optional(v.string()),
+    videoId: v.optional(v.string()),
+
+    tagIds: v.optional(v.array(v.id('tags'))), // ← mais simples
+
+    isFavorite: v.optional(v.boolean()),
+    isArchived: v.optional(v.boolean()),
+    isWatched: v.optional(v.boolean()),
+
+    addedAt: v.number(),
+    watchedAt: v.optional(v.number()),
+  })
+    .index('by_user', ['userId'])
+    .index('by_user_addedAt', ['userId', 'addedAt']),
+
+  /*
+   * Tags
+   */
+  tags: defineTable({
+    userId: v.id('users'),
+    name: v.string(),
+    color: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_user_name', ['userId', 'name']),
 })

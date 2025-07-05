@@ -1,0 +1,144 @@
+### Configuração de variáveis
+
+@baseUrl = http://localhost:3001
+@contentType = application/json
+@authToken = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+### ==========================================
+
+### PROCEDURES DE VÍDEOS
+
+### ==========================================
+
+### 1. Criar novo vídeo
+
+POST {{baseUrl}}/rpc/videos.createVideo
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+{
+    "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "title": "Never Gonna Give You Up",
+    "thumbnail": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+    "platform": "youtube",
+    "videoId": "dQw4w9WgXcQ",
+    "tagNames": ["music", "classic"],
+    "isFavorite": false
+}
+
+###
+
+### 2. Atualizar estado do vídeo
+
+POST {{baseUrl}}/rpc/videos.updateVideo
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+{
+    "videoId": "VIDEO_ID_AQUI",
+    "isFavorite": true,
+    "isWatched": false
+}
+
+###
+
+### 3. Apagar vídeo
+
+POST {{baseUrl}}/rpc/videos.deleteVideo
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+{
+    "videoId": "VIDEO_ID_AQUI"
+}
+
+###
+
+### 4. Adicionar tags ao vídeo
+
+POST {{baseUrl}}/rpc/videos.addTagsToVideo
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+{
+    "videoId": "VIDEO_ID_AQUI",
+    "tagNames": ["tutorial", "tech"]
+}
+
+###
+
+### 5. Remover tags do vídeo
+
+POST {{baseUrl}}/rpc/videos.removeTagsFromVideo
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+{
+    "videoId": "VIDEO_ID_AQUI",
+    "tagIds": ["TAG_ID_1", "TAG_ID_2"]
+}
+
+###
+
+### 6. Obter vídeos do utilizador
+
+GET {{baseUrl}}/rpc/videos.getUserVideos
+Authorization: {{authToken}}
+
+### ==========================================
+
+### EXEMPLOS DE TESTE
+
+### ==========================================
+
+### Vídeo com Twitter
+
+POST {{baseUrl}}/rpc/videos.createVideo
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+{
+    "url": "https://twitter.com/user/status/1234567890",
+    "platform": "twitter",
+    "tagNames": ["social", "news"]
+}
+
+###
+
+### Vídeo sem tags
+
+POST {{baseUrl}}/rpc/videos.createVideo
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+{
+    "url": "https://www.youtube.com/watch?v=abc123",
+    "title": "Test Video",
+    "isFavorite": true
+}
+
+###
+
+### Marcar como visto
+
+POST {{baseUrl}}/rpc/videos.updateVideo
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+{
+    "videoId": "VIDEO_ID_AQUI",
+    "isWatched": true
+}
+
+###
+
+### Arquivar vídeo
+
+POST {{baseUrl}}/rpc/videos.updateVideo
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+{
+    "videoId": "VIDEO_ID_AQUI",
+    "isArchived": true
+} 
