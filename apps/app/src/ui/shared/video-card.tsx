@@ -2,7 +2,7 @@
 
 import { api } from "@/services/api"
 import { Card, CardContent } from "@/ui/base/card"
-import { Popover, PopoverContent, PopoverTrigger } from "@/ui/base/popover"
+import { Dialog, DialogContent, DialogTrigger } from "@/ui/base/dialog"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   Archive,
@@ -119,7 +119,7 @@ export function VideoCard({ video }: VideoCardProps) {
   }
 
   return (
-    <Card className="group relative overflow-hidden border-0 bg-white shadow-sm transition-all duration-200 hover:shadow-lg">
+    <Card className="group relative gap-0 overflow-hidden border-0 bg-white py-0 shadow-sm transition-all duration-200 hover:shadow-lg">
       {/* Thumbnail container */}
       <div className="relative aspect-video overflow-hidden bg-gray-100">
         {video.thumbnail ? (
@@ -209,23 +209,23 @@ export function VideoCard({ video }: VideoCardProps) {
                 <Eye className="h-4 w-4" />
               </button>
 
-              {/* Delete with Popover */}
-              <Popover
+              {/* Delete with Dialog */}
+              <Dialog
                 open={showDeleteConfirm}
                 onOpenChange={setShowDeleteConfirm}
               >
-                <PopoverTrigger asChild>
+                <DialogTrigger asChild>
                   <button
                     className="rounded bg-white/20 p-1 text-white transition-colors hover:bg-red-500"
                     title="Delete video"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80">
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <h4 className="leading-none font-medium">Delete Video</h4>
+                      <h4 className="text-lg font-medium">Delete Video</h4>
                       <p className="text-muted-foreground text-sm">
                         Are you sure you want to delete this video? This action
                         cannot be undone.
@@ -234,28 +234,28 @@ export function VideoCard({ video }: VideoCardProps) {
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={() => setShowDeleteConfirm(false)}
-                        className="rounded bg-gray-200 px-3 py-1 text-sm transition-colors hover:bg-gray-300"
+                        className="rounded bg-gray-200 px-4 py-2 text-sm transition-colors hover:bg-gray-300"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={handleDelete}
                         disabled={deleteMutation.isPending}
-                        className="rounded bg-red-500 px-3 py-1 text-sm text-white transition-colors hover:bg-red-600 disabled:opacity-50"
+                        className="rounded bg-red-500 px-4 py-2 text-sm text-white transition-colors hover:bg-red-600 disabled:opacity-50"
                       >
                         {deleteMutation.isPending ? "Deleting..." : "Delete"}
                       </button>
                     </div>
                   </div>
-                </PopoverContent>
-              </Popover>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <CardContent className="p-3">
+      <CardContent className="flex flex-col gap-1 p-4">
         <h3 className="mb-1 line-clamp-2 text-sm leading-tight font-medium transition-colors group-hover:text-blue-600">
           {video.title || "Untitled video"}
         </h3>
