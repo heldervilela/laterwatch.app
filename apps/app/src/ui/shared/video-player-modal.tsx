@@ -1,6 +1,6 @@
 import { useVideoPlayerStore } from "@/stores/video-player-store"
 import { ExternalLink, Maximize2, Minimize2, X } from "lucide-react"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { memo, useCallback, useEffect, useRef, useState } from "react"
 
 import { cn } from "@/lib/utils"
 
@@ -34,7 +34,8 @@ interface YouTubePlayerProps {
   className?: string
 }
 
-function YouTubePlayer({
+// Memoized YouTubePlayer component to prevent unnecessary re-renders
+const YouTubePlayer = memo(function YouTubePlayer({
   videoId,
   startSeconds = 0,
   onTimeUpdate,
@@ -45,6 +46,16 @@ function YouTubePlayer({
   const ytPlayerRef = useRef<any>(null)
   const progressIntervalRef = useRef<NodeJS.Timeout>()
   const [apiLoaded, setApiLoaded] = useState(false)
+
+  // Use refs to store stable callback references
+  const onTimeUpdateRef = useRef(onTimeUpdate)
+  const onEndRef = useRef(onEnd)
+
+  // Update refs when callbacks change
+  useEffect(() => {
+    onTimeUpdateRef.current = onTimeUpdate
+    onEndRef.current = onEnd
+  }, [onTimeUpdate, onEnd])
 
   // Load YouTube API
   useEffect(() => {
@@ -74,10 +85,24 @@ function YouTubePlayer({
 
   // Initialize YouTube player when API is loaded
   useEffect(() => {
+    console.log("🔄 YouTubePlayer useEffect triggered", {
+      apiLoaded,
+      videoId,
+      startSeconds,
+      timestamp: Date.now(),
+    })
+
     if (!apiLoaded || !playerRef.current) return
 
     const playerId = `youtube-player-${videoId}-${Date.now()}`
     playerRef.current.id = playerId
+
+    console.log("🎬 Creating new YouTube player", {
+      playerId,
+      videoId,
+      startSeconds,
+      timestamp: Date.now(),
+    })
 
     ytPlayerRef.current = new window.YT.Player(playerId, {
       videoId: videoId,
@@ -90,16 +115,28 @@ function YouTubePlayer({
         fs: 1,
         cc_load_policy: 1,
         origin: window.location.origin,
+        showinfo: 0,
+        iv_load_policy: 3,
+        disablekb: 1,
+        controls: 1,
+        autohide: 1,
+        playsinline: 1,
+        widget_referrer: window.location.origin,
       },
       events: {
         onReady: () => {
+          console.log("✅ YouTube player ready - NO MORE RELOADS EXPECTED", {
+            videoId,
+            startSeconds,
+            timestamp: Date.now(),
+          })
           // Start progress tracking
           progressIntervalRef.current = setInterval(() => {
             if (ytPlayerRef.current && ytPlayerRef.current.getCurrentTime) {
               try {
                 const currentTime = ytPlayerRef.current.getCurrentTime()
                 if (currentTime > 0) {
-                  onTimeUpdate?.(currentTime)
+                  onTimeUpdateRef.current?.(currentTime)
                 }
               } catch (e) {
                 console.warn("Error getting current time:", e)
@@ -112,7 +149,7 @@ function YouTubePlayer({
           // -1: unstarted, 0: ended, 1: playing, 2: paused, 3: buffering, 5: video cued
           if (event.data === 0) {
             // Video ended
-            onEnd?.()
+            onEndRef.current?.()
           }
         },
         onError: (event: any) => {
@@ -122,6 +159,13 @@ function YouTubePlayer({
     })
 
     return () => {
+      console.log(
+        "🧹 Cleaning up YouTube player - THIS SHOULD NOT HAPPEN DURING PLAYBACK",
+        {
+          videoId,
+          timestamp: Date.now(),
+        }
+      )
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current)
       }
@@ -129,16 +173,71 @@ function YouTubePlayer({
         ytPlayerRef.current.destroy()
       }
     }
-  }, [apiLoaded, videoId, startSeconds, onTimeUpdate, onEnd])
+  }, [apiLoaded, videoId, startSeconds]) // These should be stable now
+
+  // Add styles to hide YouTube player elements
+  useEffect(() => {
+    const style = document.createElement("style")
+    style.textContent = `
+      /* Hide YouTube player title and info */
+      .ytp-chrome-top,
+      .ytp-show-cards-title,
+      .ytp-title,
+      .ytp-title-text,
+      .ytp-title-link,
+      .ytp-chrome-top-buttons,
+      .ytp-watch-later-button,
+      .ytp-share-button,
+      .ytp-overflow-button,
+      .ytp-cards-button,
+      .ytp-miniplayer-button,
+      .ytp-remote-button,
+      .ytp-size-button,
+      .ytp-subtitles-button,
+      .ytp-settings-button,
+      .ytp-pip-button,
+      .ytp-fullscreen-button,
+      .ytp-watermark {
+        display: none !important;
+      }
+      
+      /* Hide annotations and info cards */
+      .ytp-ce-element,
+      .ytp-cards-teaser,
+      .ytp-anno,
+      .ytp-anno-list {
+        display: none !important;
+      }
+      
+      /* Keep only basic controls */
+      .ytp-left-controls,
+      .ytp-right-controls {
+        display: flex !important;
+      }
+      
+      .ytp-play-button,
+      .ytp-time-display,
+      .ytp-progress-bar-container,
+      .ytp-volume-slider-container,
+      .ytp-mute-button {
+        display: block !important;
+      }
+    `
+    document.head.appendChild(style)
+
+    return () => {
+      document.head.removeChild(style)
+    }
+  }, [])
 
   return (
     <div
       ref={playerRef}
       className={cn("h-full w-full", className)}
       style={{ minHeight: "400px" }}
-    />
+    ></div>
   )
-}
+})
 
 export function VideoPlayerModal() {
   const {
@@ -152,53 +251,75 @@ export function VideoPlayerModal() {
   const [currentProgress, setCurrentProgress] = useState(0)
   const modalRef = useRef<HTMLDivElement>(null)
 
+  // Use refs to store stable references to avoid re-creating callbacks
+  const currentVideoRef = useRef(currentVideo)
+  const updateProgressRef = useRef(updateProgress)
+  const getProgressRef = useRef(getProgress)
+
+  // Store initial progress to avoid re-creating player when progress is saved
+  const initialProgressRef = useRef<number>(0)
+
+  // Update refs when store values change
+  useEffect(() => {
+    currentVideoRef.current = currentVideo
+    updateProgressRef.current = updateProgress
+    getProgressRef.current = getProgress
+  }, [currentVideo, updateProgress, getProgress])
+
   const videoId = currentVideo?.url
     ? extractYouTubeVideoId(currentVideo.url)
     : null
-  const savedProgress = currentVideo ? getProgress(currentVideo._id) : 0
 
-  // Initialize current progress when video changes
+  // Initialize progress when video changes - but keep it stable during playback
   useEffect(() => {
     if (currentVideo) {
+      const savedProgress = getProgressRef.current(currentVideo._id)
+      initialProgressRef.current = savedProgress
       setCurrentProgress(savedProgress)
+
+      console.log("🎬 Video changed, setting initial progress:", {
+        videoId: currentVideo._id,
+        savedProgress,
+      })
     }
-  }, [currentVideo, savedProgress])
+  }, [currentVideo]) // Only depend on currentVideo, not getProgress
 
-  const handleTimeUpdate = useCallback(
-    (currentTime: number) => {
-      if (currentVideo && currentTime > 0) {
-        // Update current progress state immediately for UI responsiveness
-        setCurrentProgress(currentTime)
+  // Stable handleTimeUpdate - will NOT cause re-renders
+  const handleTimeUpdate = useCallback((currentTime: number) => {
+    const video = currentVideoRef.current
+    if (video && currentTime > 0) {
+      // Update current progress state immediately for UI responsiveness
+      setCurrentProgress(currentTime)
 
-        // Save progress every 3 seconds to balance between accuracy and performance
-        // Also save when the time difference is significant (user jumped in timeline)
-        const roundedTime = Math.floor(currentTime)
-        const lastSavedTime = Math.floor(getProgress(currentVideo._id))
-        const timeDifference = Math.abs(roundedTime - lastSavedTime)
+      // Save progress every 3 seconds to balance between accuracy and performance
+      // Also save when the time difference is significant (user jumped in timeline)
+      const roundedTime = Math.floor(currentTime)
+      const lastSavedTime = Math.floor(getProgressRef.current(video._id))
+      const timeDifference = Math.abs(roundedTime - lastSavedTime)
 
-        if (
-          (roundedTime % 3 === 0 && roundedTime !== lastSavedTime) || // Every 3 seconds
-          timeDifference > 10 // Or if user jumped more than 10 seconds
-        ) {
-          updateProgress(currentVideo._id, currentTime)
-        }
+      if (
+        (roundedTime % 3 === 0 && roundedTime !== lastSavedTime) || // Every 3 seconds
+        timeDifference > 10 // Or if user jumped more than 10 seconds
+      ) {
+        updateProgressRef.current(video._id, currentTime)
       }
-    },
-    [currentVideo, updateProgress, getProgress]
-  )
+    }
+  }, []) // Empty dependencies - stable function
 
+  // Stable handleVideoEnd - will NOT cause re-renders
   const handleVideoEnd = useCallback(() => {
-    if (currentVideo) {
+    const video = currentVideoRef.current
+    if (video) {
       // Reset progress when video ends completely
       // Only reset if we're near the end to avoid false positives
-      const currentProgressValue = getProgress(currentVideo._id)
+      const currentProgressValue = getProgressRef.current(video._id)
       if (currentProgressValue > 30) {
         // Only reset if we had significant progress
-        updateProgress(currentVideo._id, 0)
+        updateProgressRef.current(video._id, 0)
         setCurrentProgress(0)
       }
     }
-  }, [currentVideo, updateProgress, getProgress])
+  }, []) // Empty dependencies - stable function
 
   const handleClose = useCallback(() => {
     closePlayer()
@@ -255,6 +376,14 @@ export function VideoPlayerModal() {
     return null
   }
 
+  console.log("🎭 VideoPlayerModal rendering", {
+    isPlayerOpen,
+    videoId,
+    currentVideoId: currentVideo._id,
+    initialProgress: initialProgressRef.current,
+    currentProgress,
+  })
+
   return (
     <div
       ref={modalRef}
@@ -267,12 +396,6 @@ export function VideoPlayerModal() {
           <h2 className="max-w-md truncate text-lg font-medium text-white">
             {currentVideo.title || "Video"}
           </h2>
-          {savedProgress > 0 && (
-            <div className="rounded bg-black/50 px-2 py-1 text-sm text-white/70">
-              Starting at {Math.floor(savedProgress / 60)}:
-              {(savedProgress % 60).toFixed(0).padStart(2, "0")}
-            </div>
-          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -310,20 +433,12 @@ export function VideoPlayerModal() {
       <div className="mx-4 mt-16 mb-4 h-full max-h-[80vh] w-full max-w-7xl">
         <YouTubePlayer
           videoId={videoId}
-          startSeconds={savedProgress}
+          startSeconds={initialProgressRef.current}
           onTimeUpdate={handleTimeUpdate}
           onEnd={handleVideoEnd}
           className="overflow-hidden rounded-lg shadow-2xl"
         />
       </div>
-
-      {/* Progress indicator */}
-      {currentProgress > 0 && (
-        <div className="absolute right-4 bottom-4 left-4 rounded bg-black/50 p-2 text-center text-sm text-white">
-          Current time: {Math.floor(currentProgress / 60)}:
-          {(currentProgress % 60).toFixed(0).padStart(2, "0")}
-        </div>
-      )}
     </div>
   )
 }
