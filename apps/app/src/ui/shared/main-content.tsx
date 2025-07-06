@@ -9,7 +9,9 @@ interface MainContentProps {
 
 function MainContent({ className, children }: MainContentProps) {
   return (
-    <main className={cn("h-full w-full py-6 pr-4", className)}>{children}</main>
+    <main className={cn("h-full w-full py-2 pr-4 pl-4", className)}>
+      {children}
+    </main>
   )
 }
 

@@ -1,6 +1,7 @@
 "use client"
 
 import { api } from "@/services/api"
+import { useVideoPlayerStore } from "@/stores/video-player-store"
 import { Card, CardContent } from "@/ui/base/card"
 import { Dialog, DialogContent, DialogTrigger } from "@/ui/base/dialog"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
@@ -52,6 +53,7 @@ function formatRelativeTime(timestamp: number): string {
 export function VideoCard({ video }: VideoCardProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const queryClient = useQueryClient()
+  const { openPlayer } = useVideoPlayerStore()
 
   // Safe values with defaults
   const isFavorite = video.isFavorite || false
@@ -110,16 +112,36 @@ export function VideoCard({ video }: VideoCardProps) {
     deleteMutation.mutate()
   }
 
-  const handleToggleFavorite = () => {
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent card click
     toggleFavoriteMutation.mutate()
   }
 
-  const handleToggleWatched = () => {
+  const handleToggleWatched = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent card click
     toggleWatchedMutation.mutate()
   }
 
+  const handleCardClick = () => {
+    openPlayer({
+      _id: video._id,
+      title: video.title,
+      url: video.url,
+      thumbnail: video.thumbnail,
+      duration: video.duration,
+    })
+  }
+
+  const handleWatchClick = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent card click
+    // This will open YouTube in new tab
+  }
+
   return (
-    <Card className="group relative gap-0 overflow-hidden border-0 bg-white py-0 shadow-sm transition-all duration-200 hover:shadow-lg">
+    <Card
+      className="group relative cursor-pointer gap-0 overflow-hidden border-0 bg-white py-0 shadow-sm transition-all duration-200 hover:shadow-lg"
+      onClick={handleCardClick}
+    >
       {/* Thumbnail container */}
       <div className="relative aspect-video overflow-hidden bg-gray-100">
         {video.thumbnail ? (
@@ -170,9 +192,10 @@ export function VideoCard({ video }: VideoCardProps) {
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1 text-white transition-colors hover:text-blue-300"
+              onClick={handleWatchClick}
             >
               <ExternalLink className="h-4 w-4" />
-              <span className="text-sm">Watch</span>
+              <span className="text-sm">Watch on YouTube</span>
             </a>
 
             {/* Action buttons */}
@@ -218,6 +241,7 @@ export function VideoCard({ video }: VideoCardProps) {
                   <button
                     className="rounded bg-white/20 p-1 text-white transition-colors hover:bg-red-500"
                     title="Delete video"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

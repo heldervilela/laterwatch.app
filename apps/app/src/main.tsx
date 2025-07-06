@@ -5,6 +5,7 @@ import ReactDOM from "react-dom/client"
 
 import { routeTree } from "./routeTree.gen"
 import { Toaster } from "./ui/base/sonner"
+import { VideoPlayerModal } from "./ui/shared/video-player-modal"
 
 import "./ui/styles.css"
 
@@ -27,6 +28,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
       <Toaster />
+      <VideoPlayerModal />
     </QueryClientProvider>
   </React.StrictMode>
 )
