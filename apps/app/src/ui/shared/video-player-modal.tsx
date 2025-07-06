@@ -1,10 +1,16 @@
-"use client"
-
 import { useVideoPlayerStore } from "@/stores/video-player-store"
 import { ExternalLink, Maximize2, Minimize2, X } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 
 import { cn } from "@/lib/utils"
+
+// Declare YouTube API types
+declare global {
+  interface Window {
+    YT: any
+    onYouTubeIframeAPIReady: () => void
+  }
+}
 
 // Helper to extract YouTube video ID from URL
 function extractYouTubeVideoId(url: string): string | null {
@@ -35,72 +41,101 @@ function YouTubePlayer({
   onEnd,
   className,
 }: YouTubePlayerProps) {
-  const iframeRef = useRef<HTMLIFrameElement>(null)
-  const [isReady, setIsReady] = useState(false)
-  const [currentTime, setCurrentTime] = useState(startSeconds)
+  const playerRef = useRef<HTMLDivElement>(null)
+  const ytPlayerRef = useRef<any>(null)
   const progressIntervalRef = useRef<NodeJS.Timeout>()
+  const [apiLoaded, setApiLoaded] = useState(false)
 
-  const embedUrl =
-    `https://www.youtube.com/embed/${videoId}?` +
-    `autoplay=1&` +
-    `start=${Math.floor(startSeconds)}&` +
-    `enablejsapi=1&` +
-    `origin=${window.location.origin}&` +
-    `rel=0&` +
-    `modestbranding=1&` +
-    `fs=1&` +
-    `cc_load_policy=1`
-
+  // Load YouTube API
   useEffect(() => {
-    // Listen for YouTube player messages
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== "https://www.youtube.com") return
-
-      if (event.data && typeof event.data === "string") {
-        try {
-          const data = JSON.parse(event.data)
-
-          if (data.event === "video-progress") {
-            const time = data.info?.currentTime || 0
-            setCurrentTime(time)
-            onTimeUpdate?.(time)
-          } else if (data.event === "video-ended") {
-            onEnd?.()
-          }
-        } catch (e) {
-          // Ignore parsing errors
-        }
-      }
+    if (window.YT && window.YT.Player) {
+      setApiLoaded(true)
+      return
     }
 
-    window.addEventListener("message", handleMessage)
+    // Load YouTube IFrame API
+    const tag = document.createElement("script")
+    tag.src = "https://www.youtube.com/iframe_api"
+    const firstScriptTag = document.getElementsByTagName("script")[0]
+    firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag)
 
-    // Start progress tracking
-    progressIntervalRef.current = setInterval(() => {
-      if (iframeRef.current) {
-        // Simulate progress - in a real implementation, you'd use YouTube API
-        const simulatedTime = currentTime + 1
-        setCurrentTime(simulatedTime)
-        onTimeUpdate?.(simulatedTime)
-      }
-    }, 1000)
+    // Set up API ready callback
+    window.onYouTubeIframeAPIReady = () => {
+      setApiLoaded(true)
+    }
 
     return () => {
-      window.removeEventListener("message", handleMessage)
+      // Cleanup
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current)
       }
     }
-  }, [currentTime, onTimeUpdate, onEnd])
+  }, [])
+
+  // Initialize YouTube player when API is loaded
+  useEffect(() => {
+    if (!apiLoaded || !playerRef.current) return
+
+    const playerId = `youtube-player-${videoId}-${Date.now()}`
+    playerRef.current.id = playerId
+
+    ytPlayerRef.current = new window.YT.Player(playerId, {
+      videoId: videoId,
+      playerVars: {
+        autoplay: 1,
+        start: Math.floor(startSeconds),
+        enablejsapi: 1,
+        rel: 0,
+        modestbranding: 1,
+        fs: 1,
+        cc_load_policy: 1,
+        origin: window.location.origin,
+      },
+      events: {
+        onReady: () => {
+          // Start progress tracking
+          progressIntervalRef.current = setInterval(() => {
+            if (ytPlayerRef.current && ytPlayerRef.current.getCurrentTime) {
+              try {
+                const currentTime = ytPlayerRef.current.getCurrentTime()
+                if (currentTime > 0) {
+                  onTimeUpdate?.(currentTime)
+                }
+              } catch (e) {
+                console.warn("Error getting current time:", e)
+              }
+            }
+          }, 1000)
+        },
+        onStateChange: (event: any) => {
+          // YouTube player states:
+          // -1: unstarted, 0: ended, 1: playing, 2: paused, 3: buffering, 5: video cued
+          if (event.data === 0) {
+            // Video ended
+            onEnd?.()
+          }
+        },
+        onError: (event: any) => {
+          console.error("YouTube player error:", event.data)
+        },
+      },
+    })
+
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current)
+      }
+      if (ytPlayerRef.current && ytPlayerRef.current.destroy) {
+        ytPlayerRef.current.destroy()
+      }
+    }
+  }, [apiLoaded, videoId, startSeconds, onTimeUpdate, onEnd])
 
   return (
-    <iframe
-      ref={iframeRef}
-      src={embedUrl}
-      className={cn("h-full w-full border-0", className)}
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-      allowFullScreen
-      onLoad={() => setIsReady(true)}
+    <div
+      ref={playerRef}
+      className={cn("h-full w-full", className)}
+      style={{ minHeight: "400px" }}
     />
   )
 }
@@ -114,6 +149,7 @@ export function VideoPlayerModal() {
     getProgress,
   } = useVideoPlayerStore()
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [currentProgress, setCurrentProgress] = useState(0)
   const modalRef = useRef<HTMLDivElement>(null)
 
   const videoId = currentVideo?.url
@@ -121,28 +157,53 @@ export function VideoPlayerModal() {
     : null
   const savedProgress = currentVideo ? getProgress(currentVideo._id) : 0
 
+  // Initialize current progress when video changes
+  useEffect(() => {
+    if (currentVideo) {
+      setCurrentProgress(savedProgress)
+    }
+  }, [currentVideo, savedProgress])
+
   const handleTimeUpdate = useCallback(
     (currentTime: number) => {
       if (currentVideo && currentTime > 0) {
-        // Save progress every 5 seconds to avoid too many updates
-        if (Math.floor(currentTime) % 5 === 0) {
+        // Update current progress state immediately for UI responsiveness
+        setCurrentProgress(currentTime)
+
+        // Save progress every 3 seconds to balance between accuracy and performance
+        // Also save when the time difference is significant (user jumped in timeline)
+        const roundedTime = Math.floor(currentTime)
+        const lastSavedTime = Math.floor(getProgress(currentVideo._id))
+        const timeDifference = Math.abs(roundedTime - lastSavedTime)
+
+        if (
+          (roundedTime % 3 === 0 && roundedTime !== lastSavedTime) || // Every 3 seconds
+          timeDifference > 10 // Or if user jumped more than 10 seconds
+        ) {
           updateProgress(currentVideo._id, currentTime)
         }
       }
     },
-    [currentVideo, updateProgress]
+    [currentVideo, updateProgress, getProgress]
   )
 
   const handleVideoEnd = useCallback(() => {
     if (currentVideo) {
-      // Reset progress when video ends
-      updateProgress(currentVideo._id, 0)
+      // Reset progress when video ends completely
+      // Only reset if we're near the end to avoid false positives
+      const currentProgressValue = getProgress(currentVideo._id)
+      if (currentProgressValue > 30) {
+        // Only reset if we had significant progress
+        updateProgress(currentVideo._id, 0)
+        setCurrentProgress(0)
+      }
     }
-  }, [currentVideo, updateProgress])
+  }, [currentVideo, updateProgress, getProgress])
 
   const handleClose = useCallback(() => {
     closePlayer()
     setIsFullscreen(false)
+    setCurrentProgress(0)
   }, [closePlayer])
 
   const toggleFullscreen = useCallback(() => {
@@ -160,12 +221,12 @@ export function VideoPlayerModal() {
   const handleOpenInYouTube = useCallback(() => {
     if (currentVideo) {
       const url =
-        savedProgress > 0
-          ? `${currentVideo.url}&t=${Math.floor(savedProgress)}s`
+        currentProgress > 0
+          ? `${currentVideo.url}&t=${Math.floor(currentProgress)}s`
           : currentVideo.url
       window.open(url, "_blank")
     }
-  }, [currentVideo, savedProgress])
+  }, [currentVideo, currentProgress])
 
   // Handle ESC key
   useEffect(() => {
@@ -197,7 +258,7 @@ export function VideoPlayerModal() {
   return (
     <div
       ref={modalRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black"
+      className="fixed inset-0 z-101 flex items-center justify-center bg-black"
       onClick={(e) => e.target === e.currentTarget && handleClose()}
     >
       {/* Header Controls */}
@@ -208,7 +269,7 @@ export function VideoPlayerModal() {
           </h2>
           {savedProgress > 0 && (
             <div className="rounded bg-black/50 px-2 py-1 text-sm text-white/70">
-              Resuming from {Math.floor(savedProgress / 60)}:
+              Starting at {Math.floor(savedProgress / 60)}:
               {(savedProgress % 60).toFixed(0).padStart(2, "0")}
             </div>
           )}
@@ -257,10 +318,10 @@ export function VideoPlayerModal() {
       </div>
 
       {/* Progress indicator */}
-      {savedProgress > 0 && (
+      {currentProgress > 0 && (
         <div className="absolute right-4 bottom-4 left-4 rounded bg-black/50 p-2 text-center text-sm text-white">
-          Video will resume from {Math.floor(savedProgress / 60)}:
-          {(savedProgress % 60).toFixed(0).padStart(2, "0")}
+          Current time: {Math.floor(currentProgress / 60)}:
+          {(currentProgress % 60).toFixed(0).padStart(2, "0")}
         </div>
       )}
     </div>
