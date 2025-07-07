@@ -1,9 +1,11 @@
 import { authMiddleware } from "@/routes/-middleware/auth"
 import { SidebarInset, SidebarProvider } from "@/ui/base/sidebar"
-import { useQuery } from "@tanstack/react-query"
+import { DragDropOverlay } from "@/ui/shared/drag-drop-overlay"
+import { DragDropTest } from "@/ui/shared/drag-drop-test"
+// import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, Outlet } from "@tanstack/react-router"
 
-import { api } from "../../services/api"
+// import { api } from "../../services/api"
 import { FloatingActionButton } from "./-ui/floating-action-button"
 import { AppSidebar } from "./-ui/sidebar"
 
@@ -15,13 +17,14 @@ export const Route = createFileRoute("/(app)")({
 })
 
 function AppLayout() {
-  const { data: userResponse } = useQuery({
-    queryKey: ["user", "me"],
-    queryFn: () => api.users.me.query(),
-    staleTime: 5 * 60 * 1000,
-  })
+  // Commented out until API structure is clarified
+  // const { data: userResponse } = useQuery({
+  //   queryKey: ["user", "me"],
+  //   queryFn: () => api.users.me.query(),
+  //   staleTime: 5 * 60 * 1000,
+  // })
 
-  console.log("User data:", userResponse) // Para usar a variável
+  // console.log("User data:", userResponse) // Para usar a variável
 
   // Função de logout disponível mas não utilizada ainda
   // const handleLogout = async () => {
@@ -51,13 +54,17 @@ function AppLayout() {
           } as React.CSSProperties
         }
       >
-        <AppSidebar variant="floating" />
+        <AppSidebar />
         <SidebarInset>
-          <Outlet />
+          <main className="flex-1">
+            <Outlet />
+          </main>
         </SidebarInset>
       </SidebarProvider>
 
       <FloatingActionButton />
+      <DragDropOverlay />
+      <DragDropTest />
     </div>
   )
 }

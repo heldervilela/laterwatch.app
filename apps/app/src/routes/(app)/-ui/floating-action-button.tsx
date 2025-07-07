@@ -11,6 +11,7 @@ import { Label } from "@/ui/base/label"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Loader2, Plus } from "lucide-react"
 import { useState } from "react"
+import { toast } from "sonner"
 
 interface FloatingActionButtonProps {
   onClick?: () => void
@@ -32,7 +33,7 @@ export function FloatingActionButton({ onClick }: FloatingActionButtonProps) {
 
   const addVideoMutation = useMutation({
     mutationFn: (videoUrl: string) =>
-      api.videos.createVideo.mutate({
+      (api.videos as any).createVideo.mutate({
         url: videoUrl,
         platform: "youtube",
       }),
@@ -45,10 +46,14 @@ export function FloatingActionButton({ onClick }: FloatingActionButtonProps) {
       setUrl("")
       setIsValidUrl(false)
       setError("")
+
+      toast.success("Video added successfully!")
     },
     onError: (error: any) => {
       console.error("Error adding video:", error)
       setError(error.message || "Error adding video. Please try again.")
+
+      toast.error("Failed to add video. Please try again.")
     },
   })
 
@@ -94,7 +99,11 @@ export function FloatingActionButton({ onClick }: FloatingActionButtonProps) {
           className="bg-primary hover:bg-primary/90 fixed right-4 bottom-4 z-50 h-14 w-14 cursor-pointer rounded-full p-0 shadow-lg transition-all duration-200 hover:shadow-xl"
           aria-label="Add video"
         >
-          <Plus className="h-6 w-6" />
+          {addVideoMutation.isPending ? (
+            <Loader2 className="h-6 w-6 animate-spin" />
+          ) : (
+            <Plus className="h-6 w-6" />
+          )}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
