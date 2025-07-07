@@ -1,6 +1,7 @@
 import * as authProcedures from '../domain/auth/procedures'
 import * as tagsProcedures from '../domain/tags/procedures'
 import * as usersProcedures from '../domain/users/procedures'
+import * as videoProgressProcedures from '../domain/video-progress/procedures'
 import * as videosProcedures from '../domain/videos/procedures'
 import { router } from './procedures'
 
@@ -35,12 +36,19 @@ const tagsRouter = router({
   getUserTags: tagsProcedures.getUserTags,
 })
 
+// Sub-router para progresso dos vídeos
+const videoProgressRouter = router({
+  getVideoProgress: videoProgressProcedures.getVideoProgress,
+  updateVideoProgress: videoProgressProcedures.updateVideoProgress,
+})
+
 // Router principal com namespaces
 export const appRouter = router({
   auth: authRouter,
   users: usersRouter,
   videos: videosRouter,
   tags: tagsRouter,
+  videoProgress: videoProgressRouter,
 })
 
 // Exportar tipo para o frontend

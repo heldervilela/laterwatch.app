@@ -73,6 +73,9 @@ export default defineSchema({
     isArchived: v.optional(v.boolean()),
     isWatched: v.optional(v.boolean()),
 
+    // Video progress in seconds
+    progress: v.optional(v.number()),
+
     addedAt: v.number(),
     watchedAt: v.optional(v.number()),
   })

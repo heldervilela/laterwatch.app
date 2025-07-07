@@ -301,7 +301,10 @@ export function VideoPlayerModal() {
         (roundedTime % 3 === 0 && roundedTime !== lastSavedTime) || // Every 3 seconds
         timeDifference > 10 // Or if user jumped more than 10 seconds
       ) {
-        updateProgressRef.current(video._id, currentTime)
+        // Use async function but don't await to avoid blocking
+        updateProgressRef.current(video._id, currentTime).catch((error) => {
+          console.warn("Failed to save progress:", error)
+        })
       }
     }
   }, []) // Empty dependencies - stable function
@@ -315,7 +318,9 @@ export function VideoPlayerModal() {
       const currentProgressValue = getProgressRef.current(video._id)
       if (currentProgressValue > 30) {
         // Only reset if we had significant progress
-        updateProgressRef.current(video._id, 0)
+        updateProgressRef.current(video._id, 0).catch((error) => {
+          console.warn("Failed to reset progress:", error)
+        })
         setCurrentProgress(0)
       }
     }

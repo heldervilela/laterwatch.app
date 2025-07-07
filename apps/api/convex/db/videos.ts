@@ -315,3 +315,76 @@ export const getUserVideos = query({
     return videos
   },
 })
+
+/*
+ * Get video with progress
+ */
+export const getVideoWithProgress = query({
+  args: {
+    videoId: v.id('videos'),
+    userId: v.id('users'),
+  },
+  handler: async (ctx, args) => {
+    try {
+      const video = await ctx.db.get(args.videoId)
+
+      if (!video || video.userId !== args.userId) {
+        return {
+          success: false,
+          messageKey: 'videos.errors.notFound',
+        }
+      }
+
+      return {
+        success: true,
+        video,
+        progress: video.progress || 0,
+      }
+    } catch (error) {
+      console.error('[Convex][GetVideoWithProgress] Error:', error)
+      return {
+        success: false,
+        messageKey: 'videos.errors.getFailed',
+      }
+    }
+  },
+})
+
+/*
+ * Update video progress
+ */
+export const updateVideoProgress = mutation({
+  args: {
+    videoId: v.id('videos'),
+    userId: v.id('users'),
+    progress: v.number(),
+  },
+  handler: async (ctx, args) => {
+    try {
+      // Check if video exists and belongs to user
+      const video = await ctx.db.get(args.videoId)
+      if (!video || video.userId !== args.userId) {
+        return {
+          success: false,
+          messageKey: 'videos.errors.notFound',
+        }
+      }
+
+      // Update progress
+      await ctx.db.patch(args.videoId, {
+        progress: args.progress,
+      })
+
+      return {
+        success: true,
+        progress: args.progress,
+      }
+    } catch (error) {
+      console.error('[Convex][UpdateVideoProgress] Error:', error)
+      return {
+        success: false,
+        messageKey: 'videos.errors.updateFailed',
+      }
+    }
+  },
+})
