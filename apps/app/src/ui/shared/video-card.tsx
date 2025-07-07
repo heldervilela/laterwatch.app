@@ -11,10 +11,11 @@ import {
   ExternalLink,
   Eye,
   Heart,
+  Play,
   Trash2,
   Video,
 } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 interface VideoCardProps {
@@ -28,6 +29,7 @@ interface VideoCardProps {
     isFavorite?: boolean
     isWatched?: boolean
     isArchived?: boolean
+    progress?: number
   }
 }
 
@@ -50,19 +52,90 @@ function formatRelativeTime(timestamp: number): string {
   }
 }
 
+// Helper function to convert duration string to seconds
+function durationToSeconds(duration?: string): number {
+  if (!duration) return 0
+
+  const parts = duration.split(":").map(Number)
+  if (parts.length === 3) {
+    // HH:MM:SS
+    return parts[0] * 3600 + parts[1] * 60 + parts[2]
+  } else if (parts.length === 2) {
+    // MM:SS
+    return parts[0] * 60 + parts[1]
+  } else if (parts.length === 1) {
+    // SS
+    return parts[0]
+  }
+  return 0
+}
+
 export function VideoCard({ video }: VideoCardProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const queryClient = useQueryClient()
-  const { openPlayer } = useVideoPlayerStore()
+  const { openPlayer, videoProgress, loadProgressFromAPI } =
+    useVideoPlayerStore()
 
   // Safe values with defaults
   const isFavorite = video.isFavorite || false
   const isWatched = video.isWatched || false
   const isArchived = video.isArchived || false
 
+  // Load progress from API when component mounts
+  useEffect(() => {
+    loadProgressFromAPI(video._id).catch((error) => {
+      console.warn("Failed to load progress for video:", video._id, error)
+    })
+  }, [video._id, loadProgressFromAPI])
+
+  // Get progress - subscribe to store updates directly
+  const storeProgress = videoProgress[video._id] || 0
+  const videoProgress_db = video.progress || 0
+
+  // Use the most recent progress (store usually has more up-to-date data)
+  const currentProgress = Math.max(storeProgress, videoProgress_db)
+
+  // Calculate progress percentage
+  const totalDuration = durationToSeconds(video.duration)
+  const progressPercentage =
+    totalDuration > 0 && currentProgress > 0
+      ? (currentProgress / totalDuration) * 100
+      : 0
+
+  // Debug logs
+  console.log("🎬 VideoCard Debug:", {
+    videoId: video._id,
+    title: video.title,
+    duration: video.duration,
+    totalDuration,
+    videoProgress_db,
+    storeProgress,
+    currentProgress,
+    progressPercentage,
+  })
+
+  // TEST: Add some mock progress for testing (remove this later)
+  const addTestProgress = async () => {
+    if (video.duration) {
+      const testProgress = Math.random() * totalDuration * 0.7 // 0-70% progress
+      console.log("🧪 Adding test progress:", testProgress)
+      try {
+        await (api.videoProgress as any).updateVideoProgress.mutate({
+          videoId: video._id,
+          progressSeconds: testProgress,
+        })
+        // Invalidate queries to refresh the UI
+        queryClient.invalidateQueries({ queryKey: ["videos"] })
+      } catch (error) {
+        console.warn("Failed to add test progress:", error)
+      }
+    }
+  }
+
   // Mutations
   const deleteMutation = useMutation({
-    mutationFn: () => api.videos.deleteVideo.mutate({ videoId: video._id }),
+    mutationFn: () =>
+      (api.videos as any).deleteVideo.mutate({ videoId: video._id }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["videos"] })
       toast.success("Video deleted successfully")
@@ -76,7 +149,7 @@ export function VideoCard({ video }: VideoCardProps) {
 
   const toggleFavoriteMutation = useMutation({
     mutationFn: () =>
-      api.videos.updateVideo.mutate({
+      (api.videos as any).updateVideo.mutate({
         videoId: video._id,
         isFavorite: !isFavorite,
       }),
@@ -94,7 +167,7 @@ export function VideoCard({ video }: VideoCardProps) {
 
   const toggleWatchedMutation = useMutation({
     mutationFn: () =>
-      api.videos.updateVideo.mutate({
+      (api.videos as any).updateVideo.mutate({
         videoId: video._id,
         isWatched: !isWatched,
       }),
@@ -164,50 +237,79 @@ export function VideoCard({ video }: VideoCardProps) {
           </div>
         )}
 
+        {/* Play button overlay */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+          <div className="rounded-full bg-black/60 p-3 backdrop-blur-sm">
+            <Play className="h-6 w-6 fill-white text-white" />
+          </div>
+        </div>
+
         {/* Status badges */}
         <div className="absolute top-2 right-2 flex gap-1">
           {isFavorite && (
-            <div className="rounded-full bg-red-500 p-1">
+            <div className="rounded-full bg-red-500 p-1 shadow-md">
               <Heart className="h-3 w-3 fill-white text-white" />
             </div>
           )}
           {isWatched && (
-            <div className="rounded-full bg-green-500 p-1">
+            <div className="rounded-full bg-green-500 p-1 shadow-md">
               <Eye className="h-3 w-3 text-white" />
             </div>
           )}
           {isArchived && (
-            <div className="rounded-full bg-gray-500 p-1">
+            <div className="rounded-full bg-gray-500 p-1 shadow-md">
               <Archive className="h-3 w-3 text-white" />
             </div>
           )}
         </div>
 
-        {/* Action bar on hover */}
-        <div className="absolute right-0 bottom-0 left-0 translate-y-full bg-black/80 p-2 transition-transform duration-200 group-hover:translate-y-0">
-          <div className="flex items-center justify-between">
+        {/* Progress bar */}
+        {progressPercentage > 0 && (
+          <div className="absolute right-0 bottom-0 left-0 h-1 bg-black/30">
+            <div
+              className="h-full bg-red-500 transition-all duration-300"
+              style={{ width: `${Math.min(progressPercentage, 100)}%` }}
+            />
+          </div>
+        )}
+
+        {/* Modern Action bar on hover */}
+        <div className="absolute inset-x-2 bottom-2 translate-y-full opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+          <div className="flex items-center justify-between rounded-lg bg-white/95 p-2 shadow-lg backdrop-blur-sm">
             {/* External link */}
             <a
               href={video.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-white transition-colors hover:text-blue-300"
+              className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600"
               onClick={handleWatchClick}
             >
               <ExternalLink className="h-4 w-4" />
-              <span className="text-sm">Watch on YouTube</span>
+              <span>YouTube</span>
             </a>
 
             {/* Action buttons */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              {/* TEST: Add progress button (remove later) */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  addTestProgress()
+                }}
+                className="rounded-md p-2 text-gray-500 transition-all duration-200 hover:bg-yellow-50 hover:text-yellow-600"
+                title="Add test progress"
+              >
+                <span className="text-xs">+P</span>
+              </button>
+
               {/* Toggle Favorite */}
               <button
                 onClick={handleToggleFavorite}
                 disabled={toggleFavoriteMutation.isPending}
-                className={`rounded p-1 transition-colors ${
+                className={`rounded-md p-2 transition-all duration-200 ${
                   isFavorite
-                    ? "bg-red-500 text-white hover:bg-red-600"
-                    : "bg-white/20 text-white hover:bg-white/30"
+                    ? "bg-red-50 text-red-600 hover:bg-red-100"
+                    : "text-gray-500 hover:bg-gray-100 hover:text-red-500"
                 }`}
                 title={
                   isFavorite ? "Remove from favorites" : "Add to favorites"
@@ -222,10 +324,10 @@ export function VideoCard({ video }: VideoCardProps) {
               <button
                 onClick={handleToggleWatched}
                 disabled={toggleWatchedMutation.isPending}
-                className={`rounded p-1 transition-colors ${
+                className={`rounded-md p-2 transition-all duration-200 ${
                   isWatched
-                    ? "bg-green-500 text-white hover:bg-green-600"
-                    : "bg-white/20 text-white hover:bg-white/30"
+                    ? "bg-green-50 text-green-600 hover:bg-green-100"
+                    : "text-gray-500 hover:bg-gray-100 hover:text-green-500"
                 }`}
                 title={isWatched ? "Mark as unwatched" : "Mark as watched"}
               >
@@ -239,7 +341,7 @@ export function VideoCard({ video }: VideoCardProps) {
               >
                 <DialogTrigger asChild>
                   <button
-                    className="rounded bg-white/20 p-1 text-white transition-colors hover:bg-red-500"
+                    className="rounded-md p-2 text-gray-500 transition-all duration-200 hover:bg-red-50 hover:text-red-500"
                     title="Delete video"
                     onClick={(e) => e.stopPropagation()}
                   >
