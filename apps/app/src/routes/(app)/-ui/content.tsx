@@ -1,7 +1,7 @@
 import { MainContent } from "@/ui/shared/main-content"
 
 export function PageContent({
-  title,
+  title: _title,
   children,
 }: {
   title: string

@@ -155,7 +155,7 @@ class AuthService {
     try {
       const decoded = jwt.verify(token, JWT_SECRET) as { userId: string }
       return decoded
-    } catch (error) {
+    } catch (_error) {
       return null
     }
   }

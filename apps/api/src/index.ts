@@ -35,7 +35,7 @@ const app = new Elysia()
     environment: env.NODE_ENV,
   }))
 
-  .listen(env.PORT)
+app.listen(env.PORT)
 
 console.log(`🦊 Elysia server is running at http://localhost:${env.PORT}`)
 console.log(`🔗 tRPC endpoint: http://localhost:${env.PORT}/rpc`)

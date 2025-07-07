@@ -43,7 +43,7 @@ const videoProgressRouter = router({
 })
 
 // Router principal com namespaces
-export const appRouter = router({
+export const appRouter: ReturnType<typeof router> = router({
   auth: authRouter,
   users: usersRouter,
   videos: videosRouter,

@@ -10,8 +10,8 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "gen:routes": "bunx @tanstack/router-cli generate",
-    "lint": "eslint src --max-warnings 0 --ignore-path .eslintignore",
-    "lint:fix": "eslint src --max-warnings 0 --fix --ignore-path .eslintignore",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
     "type-check": "tsc --noEmit --skipLibCheck",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,css,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,css,json}\""

@@ -1,4 +1,5 @@
 import { v } from 'convex/values'
+import type { Id } from '../_generated/dataModel'
 import { mutation, query } from '../_generated/server'
 
 /*
@@ -50,12 +51,12 @@ export const createVideo = mutation({
 
       // Handle tags if provided
       if (args.tagNames && args.tagNames.length > 0) {
-        const tagIds = []
+        const tagIds: Id<'tags'>[] = []
         const now = Date.now()
 
         for (const tagName of args.tagNames) {
           // Check if tag already exists
-          let existingTag = await ctx.db
+          const existingTag = await ctx.db
             .query('tags')
             .withIndex('by_user_name', q => q.eq('userId', args.userId).eq('name', tagName))
             .first()
@@ -207,12 +208,12 @@ export const addTagsToVideo = mutation({
       }
 
       // Get or create tags
-      const tagIds = []
+      const tagIds: Id<'tags'>[] = []
       const now = Date.now()
 
       for (const tagName of args.tagNames) {
         // Check if tag already exists
-        let existingTag = await ctx.db
+        const existingTag = await ctx.db
           .query('tags')
           .withIndex('by_user_name', q => q.eq('userId', args.userId).eq('name', tagName))
           .first()
