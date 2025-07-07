@@ -66,6 +66,9 @@ export default [
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-empty-object-type': 'warn',
       '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/explicit-module-boundary-types': 'off', // Disable for tRPC inference issues
+      '@typescript-eslint/consistent-type-exports': 'off', // Disable for tRPC inference issues
+      '@typescript-eslint/explicit-function-return-type': 'off', // Disable for tRPC inference issues
       'no-console': 'off', // Allow console.log in backend
       'prefer-const': 'error',
       'no-var': 'error',
