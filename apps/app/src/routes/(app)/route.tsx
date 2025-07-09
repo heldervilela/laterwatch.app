@@ -33,9 +33,7 @@ function AppLayout() {
       >
         <AppSidebar />
         <SidebarInset>
-          <main className="flex-1">
-            <Outlet />
-          </main>
+          <Outlet />
         </SidebarInset>
       </SidebarProvider>
 

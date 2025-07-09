@@ -20,7 +20,7 @@ function RootComponent() {
       <WindowControls />
 
       <Outlet />
-      <Toaster position="top-center" richColors />
+      <Toaster position="bottom-center" />
       {/* <TanStackRouterDevtools position="bottom-right" /> */}
     </div>
   )
