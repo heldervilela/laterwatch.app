@@ -1,4 +1,4 @@
-import { api } from "@/services/api"
+import { useVideoPlayerStore } from "@/stores/video-player-store"
 import { Skeleton } from "@/ui/base/skeleton"
 import { VideoCard } from "@/ui/shared/video-card"
 import { useQuery } from "@tanstack/react-query"
@@ -12,15 +12,30 @@ export const Route = createFileRoute("/(app)/")({
 })
 
 function AppDashboard() {
+  const { initializeProgressFromVideos } = useVideoPlayerStore()
+
   const {
     data: videosResponse,
     isLoading,
     error,
   } = useQuery({
     queryKey: ["videos", "user"],
-    queryFn: () => api.videos.getUserVideos.query(),
+    queryFn: () => {
+      // Temporary placeholder
+      return { videos: [] }
+      // return api.videos.getUserVideos.query()
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
+
+  const videos = videosResponse?.videos || []
+
+  // Initialize progress store when videos are loaded
+  // useEffect(() => {
+  //   if (videos.length > 0) {
+  //     initializeProgressFromVideos(videos)
+  //   }
+  // }, [videos, initializeProgressFromVideos])
 
   if (isLoading) {
     return (
@@ -56,8 +71,6 @@ function AppDashboard() {
       </PageContent>
     )
   }
-
-  const videos = videosResponse?.videos || []
 
   return (
     <PageContent title="Dashboard">
