@@ -1,11 +1,8 @@
 import { authMiddleware } from "@/routes/-middleware/auth"
 import { SidebarInset, SidebarProvider } from "@/ui/base/sidebar"
 import { DragDropOverlay } from "@/ui/shared/drag-drop-overlay"
-import { DragDropTest } from "@/ui/shared/drag-drop-test"
-// import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, Outlet } from "@tanstack/react-router"
 
-// import { api } from "../../services/api"
 import { FloatingActionButton } from "./-ui/floating-action-button"
 import { AppSidebar } from "./-ui/sidebar"
 
@@ -17,32 +14,12 @@ export const Route = createFileRoute("/(app)")({
 })
 
 function AppLayout() {
-  // Commented out until API structure is clarified
+  // Temporary comment until API structure is clarified
   // const { data: userResponse } = useQuery({
   //   queryKey: ["user", "me"],
   //   queryFn: () => api.users.me.query(),
   //   staleTime: 5 * 60 * 1000,
   // })
-
-  // console.log("User data:", userResponse) // Para usar a variável
-
-  // Função de logout disponível mas não utilizada ainda
-  // const handleLogout = async () => {
-  //   try {
-  //     const refreshToken = tokenManager.getRefreshToken()
-  //     if (refreshToken) {
-  //       await api.auth.logout.mutate({ refreshToken })
-  //     }
-  //   } catch (error) {
-  //     console.error('Erro ao fazer logout:', error)
-  //   } finally {
-  //     // Limpar tokens independentemente do resultado
-  //     tokenManager.clearTokens()
-  //     window.location.href = '/login'
-  //   }
-  // }
-
-  // const user = userResponse?.user
 
   return (
     <div className="flex h-screen flex-col">
@@ -64,7 +41,6 @@ function AppLayout() {
 
       <FloatingActionButton />
       <DragDropOverlay />
-      <DragDropTest />
     </div>
   )
 }
