@@ -1,56 +1,57 @@
+import { api } from "@/services/api"
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
-interface VideoPlayerState {
-  // Current video being played
-  currentVideo: {
-    _id: string
-    title?: string
-    url: string
-    thumbnail?: string
-    duration?: string
-  } | null
+// Types
+interface Video {
+  _id: string
+  title?: string
+  url: string
+  thumbnail?: string
+  duration?: string
+  progress?: number
+}
 
-  // Modal state
+interface VideoPlayerState {
+  // Player state
+  currentVideo: Video | null
   isPlayerOpen: boolean
 
-  // Progress tracking (cache local para performance)
-  videoProgress: Record<string, number> // videoId -> progress in seconds
+  // Progress cache (videoId -> seconds)
+  videoProgress: Record<string, number>
 
   // Loading states
   isLoadingProgress: boolean
   isSavingProgress: boolean
 
   // Actions
-  openPlayer: (video: VideoPlayerState["currentVideo"]) => void
+  openPlayer: (video: Video) => Promise<void>
   closePlayer: () => void
   updateProgress: (videoId: string, progress: number) => Promise<void>
   getProgress: (videoId: string) => number
-  loadProgressFromAPI: (videoId: string) => Promise<void>
-  initializeProgressFromVideos: (videos: any[]) => void
+  initializeProgress: (videos: Video[]) => void
 }
 
+// Store implementation
 export const useVideoPlayerStore = create<VideoPlayerState>()(
   persist(
     (set, get) => ({
+      // Initial state
       currentVideo: null,
       isPlayerOpen: false,
       videoProgress: {},
       isLoadingProgress: false,
       isSavingProgress: false,
 
-      openPlayer: async (video) => {
+      // Open video player modal
+      openPlayer: async (video: Video) => {
         set({
           currentVideo: video,
           isPlayerOpen: true,
         })
-
-        // Load progress from API when opening video
-        if (video?._id) {
-          await get().loadProgressFromAPI(video._id)
-        }
       },
 
+      // Close video player modal
       closePlayer: () => {
         set({
           currentVideo: null,
@@ -58,8 +59,9 @@ export const useVideoPlayerStore = create<VideoPlayerState>()(
         })
       },
 
+      // Update video progress (local + API)
       updateProgress: async (videoId: string, progress: number) => {
-        // Update local cache immediately for responsiveness
+        // Update local cache immediately for smooth UX
         set((state) => ({
           videoProgress: {
             ...state.videoProgress,
@@ -67,67 +69,38 @@ export const useVideoPlayerStore = create<VideoPlayerState>()(
           },
         }))
 
-        // Save to API in background
+        // Save to database in background
         try {
           set({ isSavingProgress: true })
 
-          // Temporary placeholder - replace with correct API call
-          console.log("Saving progress:", { videoId, progress })
-          // await api.videoProgress.updateVideoProgress.mutate({
-          //   videoId,
-          //   progressSeconds: progress,
-          // })
+          await (api.videoProgress as any).updateVideoProgress.mutate({
+            videoId,
+            progressSeconds: progress,
+          })
         } catch (error) {
-          console.error("Failed to save progress to API:", error)
-          // TODO: Implement retry logic or offline queue
+          console.error("Failed to save progress:", error)
         } finally {
           set({ isSavingProgress: false })
         }
       },
 
+      // Get progress for a video
       getProgress: (videoId: string) => {
-        const state = get()
-        return state.videoProgress[videoId] || 0
+        return get().videoProgress[videoId] || 0
       },
 
-      loadProgressFromAPI: async (videoId: string) => {
-        try {
-          set({ isLoadingProgress: true })
-
-          // Temporary placeholder - replace with correct API call
-          console.log("Loading progress for:", videoId)
-          // const result = await api.videoProgress.getVideoProgress.query({
-          //   videoId,
-          // })
-
-          // if (result.success && result.progress !== undefined) {
-          //   // Update local cache with API data
-          //   set((state) => ({
-          //     videoProgress: {
-          //       ...state.videoProgress,
-          //       [videoId]: result.progress || 0,
-          //     },
-          //   }))
-          // }
-        } catch (error) {
-          console.error("Failed to load progress from API:", error)
-          // Fallback to local cache - no need to throw error
-        } finally {
-          set({ isLoadingProgress: false })
-        }
-      },
-
-      // Initialize progress from videos loaded from database
-      initializeProgressFromVideos: (videos: any[]) => {
+      // Initialize progress from database when app loads
+      initializeProgress: (videos: Video[]) => {
         const progressMap: Record<string, number> = {}
 
+        // Extract progress from videos
         videos.forEach((video) => {
           if (video._id && video.progress && video.progress > 0) {
             progressMap[video._id] = video.progress
           }
         })
 
-        // Only update if we have new progress data
+        // Update store with database progress
         if (Object.keys(progressMap).length > 0) {
           set((state) => ({
             videoProgress: {
@@ -136,19 +109,17 @@ export const useVideoPlayerStore = create<VideoPlayerState>()(
             },
           }))
 
-          console.log("📊 Initialized progress from database:", {
-            videosWithProgress: Object.keys(progressMap).length,
-            totalVideos: videos.length,
-            progressMap,
-          })
+          console.log(
+            `📊 Loaded progress for ${Object.keys(progressMap).length} videos`
+          )
         }
       },
     }),
     {
-      name: "video-player-store", // unique name for storage
+      name: "video-player-store",
       partialize: (state) => ({
         videoProgress: state.videoProgress,
-      }), // only persist videoProgress
+      }),
     }
   )
 )

@@ -1,18 +1,34 @@
+import { api } from "@/services/api"
 import { useVideoPlayerStore } from "@/stores/video-player-store"
 import { Skeleton } from "@/ui/base/skeleton"
 import { VideoCard } from "@/ui/shared/video-card"
 import { useQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { Video } from "lucide-react"
+import { useEffect } from "react"
 
 import { PageContent } from "../-ui/content"
 
-export const Route = createFileRoute("/(app)/")({
+// Types
+interface Video {
+  _id: string
+  title?: string
+  url: string
+  thumbnail?: string
+  duration?: string
+  progress?: number
+  addedAt: number
+  isFavorite?: boolean
+  isWatched?: boolean
+  isArchived?: boolean
+}
+
+export const Route = createFileRoute("/(app)/(home)/")({
   component: AppDashboard,
 })
 
 function AppDashboard() {
-  const { initializeProgressFromVideos } = useVideoPlayerStore()
+  const { initializeProgress } = useVideoPlayerStore()
 
   const {
     data: videosResponse,
@@ -20,22 +36,20 @@ function AppDashboard() {
     error,
   } = useQuery({
     queryKey: ["videos", "user"],
-    queryFn: () => {
-      // Temporary placeholder
-      return { videos: [] }
-      // return api.videos.getUserVideos.query()
+    queryFn: async () => {
+      return await (api.videos as any).getUserVideos.query()
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 
-  const videos = videosResponse?.videos || []
+  const videos: Video[] = videosResponse?.videos || []
 
-  // Initialize progress store when videos are loaded
-  // useEffect(() => {
-  //   if (videos.length > 0) {
-  //     initializeProgressFromVideos(videos)
-  //   }
-  // }, [videos, initializeProgressFromVideos])
+  // Initialize progress when videos are loaded
+  useEffect(() => {
+    if (videos.length > 0) {
+      initializeProgress(videos)
+    }
+  }, [videos, initializeProgress])
 
   if (isLoading) {
     return (

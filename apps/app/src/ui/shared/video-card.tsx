@@ -15,7 +15,7 @@ import {
   Trash2,
   Video,
 } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
 
 interface VideoCardProps {
@@ -73,26 +73,16 @@ function durationToSeconds(duration?: string): number {
 export function VideoCard({ video }: VideoCardProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const queryClient = useQueryClient()
-  const { openPlayer, videoProgress, loadProgressFromAPI } =
-    useVideoPlayerStore()
+  const { openPlayer, videoProgress } = useVideoPlayerStore()
 
   // Safe values with defaults
   const isFavorite = video.isFavorite || false
   const isWatched = video.isWatched || false
   const isArchived = video.isArchived || false
 
-  // Load progress from API when component mounts
-  useEffect(() => {
-    loadProgressFromAPI(video._id).catch((error) => {
-      console.warn("Failed to load progress for video:", video._id, error)
-    })
-  }, [video._id, loadProgressFromAPI])
-
-  // Get progress - subscribe to store updates directly
+  // Get progress - use store progress or video progress from database
   const storeProgress = videoProgress[video._id] || 0
   const videoProgress_db = video.progress || 0
-
-  // Use the most recent progress (store usually has more up-to-date data)
   const currentProgress = Math.max(storeProgress, videoProgress_db)
 
   // Calculate progress percentage
@@ -101,36 +91,6 @@ export function VideoCard({ video }: VideoCardProps) {
     totalDuration > 0 && currentProgress > 0
       ? (currentProgress / totalDuration) * 100
       : 0
-
-  // Debug logs
-  console.log("🎬 VideoCard Debug:", {
-    videoId: video._id,
-    title: video.title,
-    duration: video.duration,
-    totalDuration,
-    videoProgress_db,
-    storeProgress,
-    currentProgress,
-    progressPercentage,
-  })
-
-  // TEST: Add some mock progress for testing (remove this later)
-  const addTestProgress = async () => {
-    if (video.duration) {
-      const testProgress = Math.random() * totalDuration * 0.7 // 0-70% progress
-      console.log("🧪 Adding test progress:", testProgress)
-      try {
-        await (api.videoProgress as any).updateVideoProgress.mutate({
-          videoId: video._id,
-          progressSeconds: testProgress,
-        })
-        // Invalidate queries to refresh the UI
-        queryClient.invalidateQueries({ queryKey: ["videos"] })
-      } catch (error) {
-        console.warn("Failed to add test progress:", error)
-      }
-    }
-  }
 
   // Mutations
   const deleteMutation = useMutation({
@@ -290,18 +250,6 @@ export function VideoCard({ video }: VideoCardProps) {
 
             {/* Action buttons */}
             <div className="flex items-center gap-1">
-              {/* TEST: Add progress button (remove later) */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  addTestProgress()
-                }}
-                className="rounded-md p-2 text-gray-500 transition-all duration-200 hover:bg-yellow-50 hover:text-yellow-600"
-                title="Add test progress"
-              >
-                <span className="text-xs">+P</span>
-              </button>
-
               {/* Toggle Favorite */}
               <button
                 onClick={handleToggleFavorite}
