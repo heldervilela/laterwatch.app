@@ -35,9 +35,9 @@ function AppDashboard() {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["videos", "user"],
+    queryKey: ["videos", "user", "unwatched"],
     queryFn: async () => {
-      return await (api.videos as any).getUserVideos.query()
+      return await (api.videos as any).getUserUnwatchedVideos.query()
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
   })

@@ -312,3 +312,25 @@ export const getUserVideos = protectedProcedure.query(async ({ ctx }) => {
     })
   }
 })
+
+/*
+ * Get user unwatched videos (query)
+ */
+export const getUserUnwatchedVideos = protectedProcedure.query(async ({ ctx }) => {
+  try {
+    const videos = await convexClient.query(api.db.videos.getUserUnwatchedVideos, {
+      userId: ctx.user.id,
+    })
+
+    return {
+      success: true,
+      videos,
+    }
+  } catch (error) {
+    console.error('[API][GetUserUnwatchedVideos] Error:', error)
+    throw new TRPCError({
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'videos.errors.serverError',
+    })
+  }
+})

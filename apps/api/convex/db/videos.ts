@@ -318,6 +318,25 @@ export const getUserVideos = query({
 })
 
 /*
+ * Get user unwatched videos
+ */
+export const getUserUnwatchedVideos = query({
+  args: {
+    userId: v.id('users'),
+  },
+  handler: async (ctx, args) => {
+    const videos = await ctx.db
+      .query('videos')
+      .withIndex('by_user', q => q.eq('userId', args.userId))
+      .order('desc')
+      .filter(q => q.or(q.eq(q.field('isWatched'), false), q.eq(q.field('isWatched'), undefined)))
+      .collect()
+
+    return videos
+  },
+})
+
+/*
  * Get video with progress
  */
 export const getVideoWithProgress = query({

@@ -26,6 +26,7 @@ const videosRouter = router({
   addTagsToVideo: videosProcedures.addTagsToVideo,
   removeTagsFromVideo: videosProcedures.removeTagsFromVideo,
   getUserVideos: videosProcedures.getUserVideos,
+  getUserUnwatchedVideos: videosProcedures.getUserUnwatchedVideos,
 })
 
 // Sub-router para tags

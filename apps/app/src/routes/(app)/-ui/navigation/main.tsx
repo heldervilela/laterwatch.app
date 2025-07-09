@@ -30,13 +30,13 @@ const items = [
 
 export function NavMain() {
   const { data: videosResponse } = useQuery({
-    queryKey: ["videos", "user"],
-    queryFn: () => api.videos.getUserVideos.query(),
+    queryKey: ["videos", "user", "unwatched"],
+    queryFn: () => (api.videos as any).getUserUnwatchedVideos.query(),
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 
   const videos = videosResponse?.videos || []
-  const unwatchedVideosCount = videos.filter((video) => !video.isWatched).length
+  const unwatchedVideosCount = videos.length
 
   return (
     <SidebarGroup>

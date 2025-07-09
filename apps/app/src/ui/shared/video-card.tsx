@@ -18,6 +18,10 @@ import {
 import { useState } from "react"
 import { toast } from "sonner"
 
+import { cn } from "@/lib/utils"
+
+import { durationToSeconds, formatRelativeTime } from "../utils/dates"
+
 interface VideoCardProps {
   video: {
     _id: string
@@ -31,43 +35,6 @@ interface VideoCardProps {
     isArchived?: boolean
     progress?: number
   }
-}
-
-// Helper function to format relative time
-function formatRelativeTime(timestamp: number): string {
-  const now = Date.now()
-  const diff = now - timestamp
-  const minutes = Math.floor(diff / (1000 * 60))
-  const hours = Math.floor(diff / (1000 * 60 * 60))
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-
-  if (days > 0) {
-    return `${days} day${days !== 1 ? "s" : ""} ago`
-  } else if (hours > 0) {
-    return `${hours} hour${hours !== 1 ? "s" : ""} ago`
-  } else if (minutes > 0) {
-    return `${minutes} minute${minutes !== 1 ? "s" : ""} ago`
-  } else {
-    return "Just now"
-  }
-}
-
-// Helper function to convert duration string to seconds
-function durationToSeconds(duration?: string): number {
-  if (!duration) return 0
-
-  const parts = duration.split(":").map(Number)
-  if (parts.length === 3) {
-    // HH:MM:SS
-    return parts[0] * 3600 + parts[1] * 60 + parts[2]
-  } else if (parts.length === 2) {
-    // MM:SS
-    return parts[0] * 60 + parts[1]
-  } else if (parts.length === 1) {
-    // SS
-    return parts[0]
-  }
-  return 0
 }
 
 export function VideoCard({ video }: VideoCardProps) {
@@ -181,7 +148,7 @@ export function VideoCard({ video }: VideoCardProps) {
           <img
             src={video.thumbnail}
             alt={video.title || "Video thumbnail"}
-            className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+            className="h-full w-full object-cover"
             loading="lazy"
           />
         ) : (
@@ -225,14 +192,17 @@ export function VideoCard({ video }: VideoCardProps) {
 
         {/* Progress bar */}
         {progressPercentage > 0 && (
-          <div className="absolute right-0 bottom-0 left-0 h-1 bg-black/30">
+          <div className="absolute right-0 bottom-0 left-0 h-0.5 bg-black/30">
             <div
               className="h-full bg-red-500 transition-all duration-300"
               style={{ width: `${Math.min(progressPercentage, 100)}%` }}
             />
           </div>
         )}
+      </div>
 
+      {/* Content */}
+      <CardContent className="flex flex-col gap-1 p-4">
         {/* Modern Action bar on hover */}
         <div className="absolute inset-x-2 bottom-2 translate-y-full opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
           <div className="flex items-center justify-between rounded-lg bg-white/95 p-2 shadow-lg backdrop-blur-sm">
@@ -326,15 +296,23 @@ export function VideoCard({ video }: VideoCardProps) {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Content */}
-      <CardContent className="flex flex-col gap-1 p-4">
-        <h3 className="mb-1 line-clamp-2 text-sm leading-tight font-medium transition-colors group-hover:text-blue-600">
+        {/* Details */}
+        <h3
+          className={cn(
+            "mb-1 line-clamp-2 text-sm leading-tight font-medium",
+            "transition-all duration-300 group-hover:opacity-0"
+          )}
+        >
           {video.title || "Untitled video"}
         </h3>
 
-        <div className="flex items-center gap-1 text-xs text-gray-500">
+        <div
+          className={cn(
+            "flex items-center gap-1 text-xs text-gray-500",
+            "transition-all duration-300 group-hover:opacity-0"
+          )}
+        >
           <Clock className="h-3 w-3" />
           <span>{formatRelativeTime(video.addedAt)}</span>
         </div>

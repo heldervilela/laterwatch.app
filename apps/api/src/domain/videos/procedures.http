@@ -85,6 +85,13 @@ Authorization: {{authToken}}
 GET {{baseUrl}}/rpc/videos.getUserVideos
 Authorization: {{authToken}}
 
+###
+
+### 7. Obter vídeos não assistidos do utilizador
+
+GET {{baseUrl}}/rpc/videos.getUserUnwatchedVideos
+Authorization: {{authToken}}
+
 ### ==========================================
 
 ### EXEMPLOS DE TESTE
