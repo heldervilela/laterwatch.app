@@ -7,7 +7,7 @@ export function useAddVideo() {
   const store = useAddVideoStore()
 
   // Enhanced submit function that handles cache invalidation and notifications
-  const submitVideo = async () => {
+  const submitVideo = async (): Promise<boolean> => {
     const success = await store.submitVideo()
 
     if (success) {
@@ -20,6 +20,8 @@ export function useAddVideo() {
       // Show error toast (error message is already set in store)
       toast.error("Failed to add video. Please try again.")
     }
+
+    return success
   }
 
   return {

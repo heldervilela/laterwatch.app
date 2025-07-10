@@ -1,5 +1,6 @@
 import { authMiddleware } from "@/routes/-middleware/auth"
 import { SidebarInset, SidebarProvider } from "@/ui/base/sidebar"
+import { ClipboardWatcher } from "@/ui/shared/clipboard-watcher"
 import { createFileRoute, Outlet } from "@tanstack/react-router"
 
 import { FloatingActionButton } from "./-ui/floating-action-button"
@@ -22,21 +23,22 @@ function AppLayout() {
 
   return (
     <div className="flex h-screen flex-col">
+      <ClipboardWatcher />
       <SidebarProvider
         style={
           {
-            "--sidebar-width": "calc(190px)",
-            "--header-height": "calc(var(--spacing) * 12)",
+            "--sidebar-width": "350px",
           } as React.CSSProperties
         }
       >
         <AppSidebar />
-        <SidebarInset>
-          <Outlet />
+        <SidebarInset className="flex flex-1 flex-col overflow-hidden">
+          <main className="flex flex-1 flex-col overflow-hidden">
+            <Outlet />
+          </main>
         </SidebarInset>
+        <FloatingActionButton />
       </SidebarProvider>
-
-      <FloatingActionButton />
     </div>
   )
 }
