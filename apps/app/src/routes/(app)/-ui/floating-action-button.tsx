@@ -1,4 +1,3 @@
-import { api } from "@/services/api"
 import { Button } from "@/ui/base/button"
 import {
   Dialog,
@@ -8,98 +7,54 @@ import {
 } from "@/ui/base/dialog"
 import { Input } from "@/ui/base/input"
 import { Label } from "@/ui/base/label"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Loader2, Plus } from "lucide-react"
-import { useState } from "react"
-import { toast } from "sonner"
+
+import { useAddVideo } from "@/hooks/use-add-video"
 
 interface FloatingActionButtonProps {
   onClick?: () => void
 }
 
 export function FloatingActionButton({ onClick }: FloatingActionButtonProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [url, setUrl] = useState("")
-  const [isValidUrl, setIsValidUrl] = useState(false)
-  const [error, setError] = useState("")
-
-  const queryClient = useQueryClient()
-
-  const validateYouTubeUrl = (url: string): boolean => {
-    const youtubeRegex =
-      /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9_-]{11}$/
-    return youtubeRegex.test(url)
-  }
-
-  const addVideoMutation = useMutation({
-    mutationFn: (videoUrl: string) =>
-      (api.videos as any).createVideo.mutate({
-        url: videoUrl,
-        platform: "youtube",
-      }),
-    onSuccess: () => {
-      // Invalidate and refetch videos
-      queryClient.invalidateQueries({ queryKey: ["videos", "user"] })
-
-      // Close dialog and reset form
-      setIsOpen(false)
-      setUrl("")
-      setIsValidUrl(false)
-      setError("")
-
-      toast.success("Video added successfully!")
-    },
-    onError: (error: any) => {
-      console.error("Error adding video:", error)
-      setError(error.message || "Error adding video. Please try again.")
-
-      toast.error("Failed to add video. Please try again.")
-    },
-  })
+  const {
+    // State
+    isModalOpen,
+    url,
+    isValidUrl,
+    error,
+    isLoading,
+    // Actions
+    openModal,
+    closeModal,
+    setUrl,
+    submitVideo,
+  } = useAddVideo()
 
   const handleClick = () => {
     if (onClick) {
       onClick()
     }
+    openModal()
   }
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newUrl = e.target.value
-    setUrl(newUrl)
-    setIsValidUrl(validateYouTubeUrl(newUrl))
-    setError("")
+    setUrl(e.target.value)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!isValidUrl) {
-      setError("Please enter a valid YouTube URL")
-      return
-    }
-
-    addVideoMutation.mutate(url)
-  }
-
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open)
-    if (!open) {
-      // Reset form when closing
-      setUrl("")
-      setIsValidUrl(false)
-      setError("")
-    }
+    submitVideo()
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={isModalOpen} onOpenChange={(open) => !open && closeModal()}>
       <DialogTrigger asChild>
         <Button
           onClick={handleClick}
           className="bg-primary hover:bg-primary/90 fixed right-4 bottom-4 z-50 h-14 w-14 cursor-pointer rounded-full p-0 shadow-lg transition-all duration-200 hover:shadow-xl"
           aria-label="Add video"
         >
-          {addVideoMutation.isPending ? (
+          {isLoading ? (
             <Loader2 className="h-6 w-6 animate-spin" />
           ) : (
             <Plus className="h-6 w-6" />
@@ -118,7 +73,7 @@ export function FloatingActionButton({ onClick }: FloatingActionButtonProps) {
                 value={url}
                 onChange={handleUrlChange}
                 className={`${error ? "border-red-500" : ""}`}
-                disabled={addVideoMutation.isPending}
+                disabled={isLoading}
               />
               {error && <p className="text-sm text-red-500">{error}</p>}
               {url && !isValidUrl && (
@@ -133,16 +88,13 @@ export function FloatingActionButton({ onClick }: FloatingActionButtonProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setIsOpen(false)}
-              disabled={addVideoMutation.isPending}
+              onClick={closeModal}
+              disabled={isLoading}
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={!isValidUrl || addVideoMutation.isPending}
-            >
-              {addVideoMutation.isPending ? (
+            <Button type="submit" disabled={!isValidUrl || isLoading}>
+              {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Adding...
