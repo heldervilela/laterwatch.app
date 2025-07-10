@@ -1,5 +1,5 @@
 import { useVideoPlayerStore } from "@/stores/video-player-store"
-import { Maximize2, Minimize2, X } from "lucide-react"
+import { Maximize2, Minimize2, Pin, PinOff, X } from "lucide-react"
 import { memo, useCallback, useEffect, useRef, useState } from "react"
 
 import { cn } from "@/lib/utils"
@@ -285,6 +285,7 @@ export function VideoPlayerModal() {
   const [currentProgress, setCurrentProgress] = useState(0)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isPinned, setIsPinned] = useState(false)
   const modalRef = useRef<HTMLDivElement>(null)
 
   // Use refs to store stable references to avoid re-creating callbacks
@@ -385,6 +386,27 @@ export function VideoPlayerModal() {
     }
   }, [isFullscreen])
 
+  const togglePin = useCallback(async () => {
+    try {
+      // Import Tauri window API dynamically to avoid issues in development
+      const { getCurrentWindow } = await import("@tauri-apps/api/window")
+      const window = getCurrentWindow()
+
+      const newPinnedState = !isPinned
+      await window.setAlwaysOnTop(newPinnedState)
+      setIsPinned(newPinnedState)
+
+      console.log(
+        "📌 Window pin state changed:",
+        newPinnedState ? "pinned" : "unpinned"
+      )
+    } catch (error) {
+      console.warn("Failed to toggle pin state:", error)
+      // Fallback for development or if Tauri API is not available
+      setIsPinned(!isPinned)
+    }
+  }, [isPinned])
+
   // Handle ESC key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -435,6 +457,22 @@ export function VideoPlayerModal() {
         }`}
       >
         <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/90 p-2 shadow-2xl backdrop-blur-md">
+          <button
+            onClick={togglePin}
+            className={`rounded border p-3 text-white/90 shadow-lg transition-all duration-200 hover:text-white ${
+              isPinned
+                ? "border-blue-500/50 bg-blue-600/80 hover:bg-blue-500/80"
+                : "border-white/20 bg-black/80 hover:bg-white/20"
+            }`}
+            title={isPinned ? "Unpin window" : "Pin window always on top"}
+          >
+            {isPinned ? (
+              <PinOff className="h-5 w-5" />
+            ) : (
+              <Pin className="h-5 w-5" />
+            )}
+          </button>
+
           <button
             onClick={toggleFullscreen}
             className="rounded border border-white/20 bg-black/80 p-3 text-white/90 shadow-lg transition-all duration-200 hover:bg-white/20 hover:text-white"
