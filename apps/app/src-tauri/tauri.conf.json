@@ -18,6 +18,9 @@
         "height": 600,
         "decorations": false,
         "transparent": true,
+        "shadow": true,
+        "hiddenTitle": true,
+        "titleBarStyle": "Overlay",
         "dragDropEnabled": true
       }
     ],

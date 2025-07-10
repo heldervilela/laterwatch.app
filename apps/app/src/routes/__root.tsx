@@ -16,12 +16,14 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 function RootComponent() {
   return (
-    <div className="window-rounded min-h-screen">
-      <WindowControls />
+    <div className="window-rounded">
+      <div className="window-content">
+        <WindowControls />
 
-      <Outlet />
-      <Toaster position="bottom-center" />
-      {/* <TanStackRouterDevtools position="bottom-right" /> */}
+        <Outlet />
+        <Toaster position="bottom-center" />
+        {/* <TanStackRouterDevtools position="bottom-right" /> */}
+      </div>
     </div>
   )
 }
