@@ -374,6 +374,21 @@ export function VideoPlayerModal() {
     setCurrentProgress(0)
   }, [closePlayer])
 
+  const handleStartDrag = useCallback(async (e: React.MouseEvent) => {
+    try {
+      // Import Tauri window API dynamically
+      const { getCurrentWindow } = await import("@tauri-apps/api/window")
+      const window = getCurrentWindow()
+
+      // Start dragging the window
+      await window.startDragging()
+
+      console.log("🖱️ Window drag started")
+    } catch (error) {
+      console.warn("Failed to start window drag:", error)
+    }
+  }, [])
+
   const togglePin = useCallback(async () => {
     try {
       // Import Tauri window API dynamically to avoid issues in development
@@ -420,10 +435,18 @@ export function VideoPlayerModal() {
       const { width } = WINDOW_SIZES[nextIndex]
       const height = calculateHeight(width)
 
-      // Center the window when resizing
-      const { availWidth, availHeight } = screen
-      const x = Math.round((availWidth - width) / 2)
-      const y = Math.round((availHeight - height) / 2)
+      // Get current window position and size to maintain top-right corner fixed
+      const currentPosition = await window.outerPosition()
+      const currentSize = await window.outerSize()
+
+      // Calculate new position to keep top-right corner in the same place
+      // Window should grow/shrink towards left and bottom
+      const widthDiff = currentSize.width - width
+      const heightDiff = currentSize.height - height
+
+      // Keep top-right corner fixed: adjust X by full width difference, keep Y same
+      const x = currentPosition.x + widthDiff
+      const y = currentPosition.y // Keep top edge in same position
 
       // Import Tauri types for size and position
       const { LogicalSize, LogicalPosition } = await import(
@@ -441,7 +464,9 @@ export function VideoPlayerModal() {
         size: WINDOW_SIZES[nextIndex].label,
         width,
         height,
-        position: { x, y },
+        currentPos: { x: currentPosition.x, y: currentPosition.y },
+        newPos: { x, y },
+        sizeDiff: { widthDiff, heightDiff },
       })
     } catch (error) {
       console.warn("Failed to resize window:", error)
@@ -525,6 +550,17 @@ export function VideoPlayerModal() {
       className="group fixed inset-0 z-101 bg-black"
       onClick={(e) => e.target === e.currentTarget && handleClose()}
     >
+      {/* Drag Area - Top bar for moving window */}
+      <div
+        className={`absolute top-0 right-20 left-0 z-40 h-12 cursor-move transition-opacity duration-300 ease-in-out ${
+          !isPlaying
+            ? "bg-black/20 opacity-100" // Slightly visible when paused
+            : "opacity-0 group-hover:bg-black/10 group-hover:opacity-100" // Transparent when playing, slightly visible on hover
+        }`}
+        onMouseDown={handleStartDrag}
+        title="Drag to move window"
+      />
+
       {/* Auto-hide Header Controls - Show when paused or on hover when playing */}
       <div
         className={`absolute top-0 right-0 z-50 p-4 transition-opacity duration-300 ease-in-out ${
