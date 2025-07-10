@@ -1,5 +1,5 @@
 import { useVideoPlayerStore } from "@/stores/video-player-store"
-import { Maximize2, Minimize2, Pin, PinOff, X } from "lucide-react"
+import { Maximize2, Pin, PinOff, X } from "lucide-react"
 import { memo, useCallback, useEffect, useRef, useState } from "react"
 
 import { cn } from "@/lib/utils"
@@ -283,9 +283,9 @@ export function VideoPlayerModal() {
     getProgress,
   } = useVideoPlayerStore()
   const [currentProgress, setCurrentProgress] = useState(0)
-  const [isFullscreen, setIsFullscreen] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isPinned, setIsPinned] = useState(false)
+  const [sizeIndex, setSizeIndex] = useState(0) // 0=800px, 1=500px, 2=300px
   const modalRef = useRef<HTMLDivElement>(null)
 
   // Use refs to store stable references to avoid re-creating callbacks
@@ -374,18 +374,6 @@ export function VideoPlayerModal() {
     setCurrentProgress(0)
   }, [closePlayer])
 
-  const toggleFullscreen = useCallback(() => {
-    if (!modalRef.current) return
-
-    if (!isFullscreen) {
-      modalRef.current.requestFullscreen?.()
-      setIsFullscreen(true)
-    } else {
-      document.exitFullscreen?.()
-      setIsFullscreen(false)
-    }
-  }, [isFullscreen])
-
   const togglePin = useCallback(async () => {
     try {
       // Import Tauri window API dynamically to avoid issues in development
@@ -407,6 +395,106 @@ export function VideoPlayerModal() {
     }
   }, [isPinned])
 
+  const WINDOW_SIZES = [
+    { width: 800, label: "Large" },
+    { width: 500, label: "Medium" },
+    { width: 300, label: "Small" },
+  ]
+
+  const calculateHeight = useCallback((width: number) => {
+    // YouTube videos are typically 16:9 aspect ratio
+    // Add some padding for window decorations and controls
+    const aspectRatio = 16 / 9
+    const videoHeight = Math.round(width / aspectRatio)
+    const padding = 40 // Account for window decorations
+    return videoHeight + padding
+  }, [])
+
+  const toggleWindowSize = useCallback(async () => {
+    try {
+      // Import Tauri window API dynamically
+      const { getCurrentWindow } = await import("@tauri-apps/api/window")
+      const window = getCurrentWindow()
+
+      const nextIndex = (sizeIndex + 1) % WINDOW_SIZES.length
+      const { width } = WINDOW_SIZES[nextIndex]
+      const height = calculateHeight(width)
+
+      // Center the window when resizing
+      const { availWidth, availHeight } = screen
+      const x = Math.round((availWidth - width) / 2)
+      const y = Math.round((availHeight - height) / 2)
+
+      // Import Tauri types for size and position
+      const { LogicalSize, LogicalPosition } = await import(
+        "@tauri-apps/api/window"
+      )
+
+      await Promise.all([
+        window.setSize(new LogicalSize(width, height)),
+        window.setPosition(new LogicalPosition(x, y)),
+      ])
+
+      setSizeIndex(nextIndex)
+
+      console.log("📏 Window resized:", {
+        size: WINDOW_SIZES[nextIndex].label,
+        width,
+        height,
+        position: { x, y },
+      })
+    } catch (error) {
+      console.warn("Failed to resize window:", error)
+      // Fallback - just update the index for UI feedback
+      setSizeIndex((prev) => (prev + 1) % WINDOW_SIZES.length)
+    }
+  }, [sizeIndex, calculateHeight])
+
+  // Reset size index when window is manually resized
+  useEffect(() => {
+    const handleResize = async () => {
+      try {
+        const { getCurrentWindow } = await import("@tauri-apps/api/window")
+        const window = getCurrentWindow()
+
+        // Listen for manual window resize
+        const unlisten = await window.onResized(({ payload }) => {
+          // Check if current size matches any of our presets
+          const currentWidth = payload.width
+          const matchingIndex = WINDOW_SIZES.findIndex(
+            (size) => Math.abs(size.width - currentWidth) < 50 // Allow some tolerance
+          )
+
+          if (matchingIndex === -1) {
+            // Manual resize detected, reset to first size for next click
+            setSizeIndex(0)
+            console.log(
+              "🔄 Manual resize detected, reset to large size for next toggle"
+            )
+          }
+        })
+
+        return unlisten
+      } catch (error) {
+        console.warn("Failed to setup resize listener:", error)
+      }
+    }
+
+    let cleanup: (() => void) | undefined
+
+    if (isPlayerOpen) {
+      handleResize().then((unlisten) => {
+        cleanup = unlisten
+      })
+    }
+
+    return () => {
+      if (cleanup) {
+        cleanup()
+      }
+    }
+  }, [isPlayerOpen])
+
   // Handle ESC key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -418,17 +506,6 @@ export function VideoPlayerModal() {
     document.addEventListener("keydown", handleKeyDown)
     return () => document.removeEventListener("keydown", handleKeyDown)
   }, [isPlayerOpen, handleClose])
-
-  // Handle fullscreen changes
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(Boolean(document.fullscreenElement))
-    }
-
-    document.addEventListener("fullscreenchange", handleFullscreenChange)
-    return () =>
-      document.removeEventListener("fullscreenchange", handleFullscreenChange)
-  }, [])
 
   if (!isPlayerOpen || !currentVideo || !videoId) {
     return null
@@ -474,15 +551,11 @@ export function VideoPlayerModal() {
           </button>
 
           <button
-            onClick={toggleFullscreen}
+            onClick={toggleWindowSize}
             className="rounded border border-white/20 bg-black/80 p-3 text-white/90 shadow-lg transition-all duration-200 hover:bg-white/20 hover:text-white"
-            title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            title={`Resize to ${WINDOW_SIZES[(sizeIndex + 1) % WINDOW_SIZES.length].label.toLowerCase()} (${WINDOW_SIZES[(sizeIndex + 1) % WINDOW_SIZES.length].width}px)`}
           >
-            {isFullscreen ? (
-              <Minimize2 className="h-5 w-5" />
-            ) : (
-              <Maximize2 className="h-5 w-5" />
-            )}
+            <Maximize2 className="h-5 w-5" />
           </button>
 
           <button
