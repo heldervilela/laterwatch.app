@@ -2,8 +2,8 @@
 
 import { api } from "@/services/api"
 import { useVideoPlayerStore } from "@/stores/video-player-store"
-import { Card, CardContent } from "@/ui/base/card"
-import { Dialog, DialogContent, DialogTrigger } from "@/ui/base/dialog"
+import { Card } from "@/ui/base/card"
+import { Dialog, DialogContent } from "@/ui/base/dialog"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   Archive,
@@ -66,11 +66,15 @@ export function VideoCard({ video }: VideoCardProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["videos"] })
       toast.success("Video deleted successfully")
-      setShowDeleteConfirm(false)
+      // Close dialog with a small delay to prevent event issues
+      setTimeout(() => {
+        setShowDeleteConfirm(false)
+      }, 100)
     },
     onError: (error) => {
       console.error("Error deleting video:", error)
       toast.error("Failed to delete video")
+      setShowDeleteConfirm(false)
     },
   })
 
@@ -108,7 +112,8 @@ export function VideoCard({ video }: VideoCardProps) {
     },
   })
 
-  const handleDelete = () => {
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent card click
     deleteMutation.mutate()
   }
 
@@ -123,6 +128,11 @@ export function VideoCard({ video }: VideoCardProps) {
   }
 
   const handleCardClick = () => {
+    // Don't open player if delete is in progress or dialog is open
+    if (deleteMutation.isPending || showDeleteConfirm) {
+      return
+    }
+
     openPlayer({
       _id: video._id,
       title: video.title,
@@ -132,191 +142,176 @@ export function VideoCard({ video }: VideoCardProps) {
     })
   }
 
-  const handleWatchClick = (e: React.MouseEvent) => {
+  const handleExternalLink = (e: React.MouseEvent) => {
     e.stopPropagation() // Prevent card click
-    // This will open YouTube in new tab
+    window.open(video.url, "_blank", "noopener,noreferrer")
+  }
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent card click
+    setShowDeleteConfirm(true)
+  }
+
+  const handleCancelDelete = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent card click
+    setShowDeleteConfirm(false)
   }
 
   return (
-    <Card
-      className="group relative cursor-pointer gap-0 overflow-hidden border-0 bg-white py-0 shadow-sm transition-all duration-200 hover:shadow-lg"
-      onClick={handleCardClick}
-    >
-      {/* Thumbnail container */}
-      <div className="relative aspect-video overflow-hidden bg-gray-100">
-        {video.thumbnail ? (
-          <img
-            src={video.thumbnail}
-            alt={video.title || "Video thumbnail"}
-            className="h-full w-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gray-200">
-            <Video className="h-8 w-8 text-gray-400" />
-          </div>
-        )}
-
-        {/* Duration overlay */}
-        {video.duration && (
-          <div className="absolute right-2 bottom-2 rounded bg-black/80 px-1.5 py-0.5 text-xs font-medium text-white">
-            {video.duration}
-          </div>
-        )}
-
-        {/* Play button overlay */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-          <div className="rounded-full bg-black/60 p-3 backdrop-blur-sm">
-            <Play className="h-6 w-6 fill-white text-white" />
-          </div>
-        </div>
-
-        {/* Status badges */}
-        <div className="absolute top-2 right-2 flex gap-1">
-          {isFavorite && (
-            <div className="rounded-full bg-red-500 p-1 shadow-md">
-              <Heart className="h-3 w-3 fill-white text-white" />
-            </div>
-          )}
-          {isWatched && (
-            <div className="rounded-full bg-green-500 p-1 shadow-md">
-              <Eye className="h-3 w-3 text-white" />
-            </div>
-          )}
-          {isArchived && (
-            <div className="rounded-full bg-gray-500 p-1 shadow-md">
-              <Archive className="h-3 w-3 text-white" />
-            </div>
-          )}
-        </div>
-
-        {/* Progress bar */}
-        {progressPercentage > 0 && (
-          <div className="absolute right-0 bottom-0 left-0 h-0.5 bg-black/30">
-            <div
-              className="h-full bg-red-500 transition-all duration-300"
-              style={{ width: `${Math.min(progressPercentage, 100)}%` }}
+    <>
+      <Card
+        className="group relative cursor-pointer overflow-hidden border-0 bg-transparent p-0 shadow-sm transition-all duration-300 hover:shadow-xl"
+        onClick={handleCardClick}
+      >
+        {/* Main image container with overlay content */}
+        <div className="relative aspect-video overflow-hidden rounded-lg bg-gray-100">
+          {/* Background image */}
+          {video.thumbnail ? (
+            <img
+              src={video.thumbnail}
+              alt={video.title || "Video thumbnail"}
+              className="h-full w-full object-cover"
+              loading="lazy"
             />
-          </div>
-        )}
-      </div>
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-gray-200">
+              <Video className="h-8 w-8 text-gray-400" />
+            </div>
+          )}
 
-      {/* Content */}
-      <CardContent className="flex flex-col gap-1 p-4">
-        {/* Modern Action bar on hover */}
-        <div className="absolute inset-x-2 bottom-2 translate-y-full opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-          <div className="flex items-center justify-between rounded-lg bg-white/95 p-2 shadow-lg backdrop-blur-sm">
-            {/* External link */}
-            <a
-              href={video.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-600"
-              onClick={handleWatchClick}
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+
+          {/* Duration badge */}
+          {video.duration && (
+            <div className="absolute top-3 left-3 rounded-md bg-black/70 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm">
+              {video.duration}
+            </div>
+          )}
+
+          {/* Action buttons - circular on hover */}
+          <div className="absolute top-3 right-3 flex gap-2 opacity-0 transition-all duration-300 group-hover:opacity-100">
+            {/* Favorite button */}
+            <button
+              onClick={handleToggleFavorite}
+              disabled={toggleFavoriteMutation.isPending}
+              className={cn(
+                "flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-sm transition-all duration-200",
+                isFavorite
+                  ? "bg-red-500/90 text-white hover:bg-red-600/90"
+                  : "bg-white/20 text-white hover:bg-white/30"
+              )}
+              title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+            >
+              <Heart className={cn("h-4 w-4", isFavorite && "fill-current")} />
+            </button>
+
+            {/* Watched button */}
+            <button
+              onClick={handleToggleWatched}
+              disabled={toggleWatchedMutation.isPending}
+              className={cn(
+                "flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-sm transition-all duration-200",
+                isWatched
+                  ? "bg-green-500/90 text-white hover:bg-green-600/90"
+                  : "bg-white/20 text-white hover:bg-white/30"
+              )}
+              title={isWatched ? "Mark as unwatched" : "Mark as watched"}
+            >
+              <Eye className="h-4 w-4" />
+            </button>
+
+            {/* External link button */}
+            <button
+              onClick={handleExternalLink}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-all duration-200 hover:bg-white/30"
+              title="Open in YouTube"
             >
               <ExternalLink className="h-4 w-4" />
-              <span>YouTube</span>
-            </a>
+            </button>
 
-            {/* Action buttons */}
-            <div className="flex items-center gap-1">
-              {/* Toggle Favorite */}
-              <button
-                onClick={handleToggleFavorite}
-                disabled={toggleFavoriteMutation.isPending}
-                className={`rounded-md p-2 transition-all duration-200 ${
-                  isFavorite
-                    ? "bg-red-50 text-red-600 hover:bg-red-100"
-                    : "text-gray-500 hover:bg-gray-100 hover:text-red-500"
-                }`}
-                title={
-                  isFavorite ? "Remove from favorites" : "Add to favorites"
-                }
-              >
-                <Heart
-                  className={`h-4 w-4 ${isFavorite ? "fill-current" : ""}`}
-                />
-              </button>
+            {/* Delete button */}
+            <button
+              onClick={handleDeleteClick}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-all duration-200 hover:bg-red-500/90"
+              title="Delete video"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
 
-              {/* Toggle Watched */}
-              <button
-                onClick={handleToggleWatched}
-                disabled={toggleWatchedMutation.isPending}
-                className={`rounded-md p-2 transition-all duration-200 ${
-                  isWatched
-                    ? "bg-green-50 text-green-600 hover:bg-green-100"
-                    : "text-gray-500 hover:bg-gray-100 hover:text-green-500"
-                }`}
-                title={isWatched ? "Mark as unwatched" : "Mark as watched"}
-              >
-                <Eye className="h-4 w-4" />
-              </button>
+          {/* Status indicators */}
+          <div className="absolute top-3 left-1/2 flex -translate-x-1/2 gap-1">
+            {isArchived && (
+              <div className="rounded-full bg-gray-500/80 p-1 backdrop-blur-sm">
+                <Archive className="h-3 w-3 text-white" />
+              </div>
+            )}
+          </div>
 
-              {/* Delete with Dialog */}
-              <Dialog
-                open={showDeleteConfirm}
-                onOpenChange={setShowDeleteConfirm}
-              >
-                <DialogTrigger asChild>
-                  <button
-                    className="rounded-md p-2 text-gray-500 transition-all duration-200 hover:bg-red-50 hover:text-red-500"
-                    title="Delete video"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <h4 className="text-lg font-medium">Delete Video</h4>
-                      <p className="text-muted-foreground text-sm">
-                        Are you sure you want to delete this video? This action
-                        cannot be undone.
-                      </p>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() => setShowDeleteConfirm(false)}
-                        className="rounded bg-gray-200 px-4 py-2 text-sm transition-colors hover:bg-gray-300"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleDelete}
-                        disabled={deleteMutation.isPending}
-                        className="rounded bg-red-500 px-4 py-2 text-sm text-white transition-colors hover:bg-red-600 disabled:opacity-50"
-                      >
-                        {deleteMutation.isPending ? "Deleting..." : "Delete"}
-                      </button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+          {/* Play button overlay - positioned bottom-left on hover */}
+          <div className="absolute bottom-4 left-4 opacity-0 transition-all duration-300 group-hover:opacity-100">
+            <div className="rounded-full bg-white/20 p-3 backdrop-blur-sm">
+              <Play className="h-6 w-6 fill-white text-white" />
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          {progressPercentage > 0 && (
+            <div className="absolute right-0 bottom-0 left-0 h-1 bg-white/20">
+              <div
+                className="h-full bg-red-500 transition-all duration-300"
+                style={{ width: `${Math.min(progressPercentage, 100)}%` }}
+              />
+            </div>
+          )}
+
+          {/* Content overlay at bottom - hidden on hover */}
+          <div className="absolute right-0 bottom-0 left-0 p-4 transition-all duration-300 group-hover:opacity-0">
+            <h3 className="mb-2 truncate text-sm leading-tight font-semibold text-white drop-shadow-md">
+              {video.title || "Untitled video"}
+            </h3>
+
+            <div className="flex items-center gap-1 text-xs text-white/80">
+              <Clock className="h-3 w-3" />
+              <span>{formatRelativeTime(video.addedAt)}</span>
             </div>
           </div>
         </div>
+      </Card>
 
-        {/* Details */}
-        <h3
-          className={cn(
-            "mb-1 line-clamp-2 text-sm leading-tight font-medium",
-            "transition-all duration-300 group-hover:opacity-0"
-          )}
+      {/* Delete confirmation dialog - outside Card to prevent event bubbling */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent
+          className="max-w-md"
+          onClick={(e) => e.stopPropagation()}
         >
-          {video.title || "Untitled video"}
-        </h3>
-
-        <div
-          className={cn(
-            "flex items-center gap-1 text-xs text-gray-500",
-            "transition-all duration-300 group-hover:opacity-0"
-          )}
-        >
-          <Clock className="h-3 w-3" />
-          <span>{formatRelativeTime(video.addedAt)}</span>
-        </div>
-      </CardContent>
-    </Card>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <h4 className="text-lg font-medium">Delete Video</h4>
+              <p className="text-muted-foreground text-sm">
+                Are you sure you want to delete this video? This action cannot
+                be undone.
+              </p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={handleCancelDelete}
+                className="rounded bg-gray-200 px-4 py-2 text-sm transition-colors hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleteMutation.isPending}
+                className="rounded bg-red-500 px-4 py-2 text-sm text-white transition-colors hover:bg-red-600 disabled:opacity-50"
+              >
+                {deleteMutation.isPending ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
