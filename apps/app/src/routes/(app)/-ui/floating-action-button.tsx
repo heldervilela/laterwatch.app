@@ -7,7 +7,9 @@ import {
 } from "@/ui/base/dialog"
 import { Input } from "@/ui/base/input"
 import { Label } from "@/ui/base/label"
-import { Loader2, Plus } from "lucide-react"
+import { getCurrentWindow } from "@tauri-apps/api/window"
+import { Loader2, Pin, PinOff, Plus } from "lucide-react"
+import { useEffect, useState } from "react"
 
 import { useAddVideo } from "@/hooks/use-add-video"
 
@@ -16,6 +18,7 @@ interface FloatingActionButtonProps {
 }
 
 export function FloatingActionButton({ onClick }: FloatingActionButtonProps) {
+  const [isAlwaysOnTop, setIsAlwaysOnTop] = useState(false)
   const {
     // State
     isModalOpen,
@@ -29,6 +32,20 @@ export function FloatingActionButton({ onClick }: FloatingActionButtonProps) {
     setUrl,
     submitVideo,
   } = useAddVideo()
+
+  // Initialize always on top state
+  useEffect(() => {
+    const initAlwaysOnTop = async () => {
+      try {
+        const appWindow = getCurrentWindow()
+        const isOnTop = await appWindow.isAlwaysOnTop()
+        setIsAlwaysOnTop(isOnTop)
+      } catch (error) {
+        console.error("Failed to get always on top state:", error)
+      }
+    }
+    initAlwaysOnTop()
+  }, [])
 
   const handleClick = () => {
     if (onClick) {
@@ -46,66 +63,100 @@ export function FloatingActionButton({ onClick }: FloatingActionButtonProps) {
     submitVideo()
   }
 
-  return (
-    <Dialog open={isModalOpen} onOpenChange={(open) => !open && closeModal()}>
-      <DialogTrigger asChild>
-        <Button
-          onClick={handleClick}
-          className="bg-primary hover:bg-primary/90 fixed right-4 bottom-4 z-50 h-14 w-14 cursor-pointer rounded-full p-0 shadow-lg transition-all duration-200 hover:shadow-xl"
-          aria-label="Add video"
-        >
-          {isLoading ? (
-            <Loader2 className="h-6 w-6 animate-spin" />
-          ) : (
-            <Plus className="h-6 w-6" />
-          )}
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="youtube-url">YouTube URL</Label>
-              <Input
-                id="youtube-url"
-                type="url"
-                placeholder="https://www.youtube.com/watch?v=..."
-                value={url}
-                onChange={handleUrlChange}
-                className={`${error ? "border-red-500" : ""}`}
-                disabled={isLoading}
-              />
-              {error && <p className="text-sm text-red-500">{error}</p>}
-              {url && !isValidUrl && (
-                <p className="text-sm text-yellow-600">
-                  Please enter a valid YouTube URL
-                </p>
-              )}
-            </div>
-          </div>
+  const toggleAlwaysOnTop = async () => {
+    try {
+      const appWindow = getCurrentWindow()
+      const newState = !isAlwaysOnTop
+      await appWindow.setAlwaysOnTop(newState)
+      setIsAlwaysOnTop(newState)
+    } catch (error) {
+      console.error("Failed to toggle always on top:", error)
+    }
+  }
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={closeModal}
-              disabled={isLoading}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={!isValidUrl || isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Adding...
-                </>
-              ) : (
-                "Add video"
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+  return (
+    <>
+      {/* Always on top toggle button */}
+      <Button
+        onClick={toggleAlwaysOnTop}
+        className={`fixed right-4 bottom-20 z-50 h-12 w-12 cursor-pointer rounded-full p-0 shadow-lg transition-all duration-200 hover:shadow-xl ${
+          isAlwaysOnTop
+            ? "bg-blue-500 text-white hover:bg-blue-600"
+            : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+        }`}
+        aria-label={
+          isAlwaysOnTop ? "Disable always on top" : "Enable always on top"
+        }
+        title={isAlwaysOnTop ? "Disable always on top" : "Enable always on top"}
+      >
+        {isAlwaysOnTop ? (
+          <Pin className="h-5 w-5" />
+        ) : (
+          <PinOff className="h-5 w-5" />
+        )}
+      </Button>
+
+      {/* Add video button */}
+      <Dialog open={isModalOpen} onOpenChange={(open) => !open && closeModal()}>
+        <DialogTrigger asChild>
+          <Button
+            onClick={handleClick}
+            className="bg-primary hover:bg-primary/90 fixed right-4 bottom-4 z-50 h-14 w-14 cursor-pointer rounded-full p-0 shadow-lg transition-all duration-200 hover:shadow-xl"
+            aria-label="Add video"
+          >
+            {isLoading ? (
+              <Loader2 className="h-6 w-6 animate-spin" />
+            ) : (
+              <Plus className="h-6 w-6" />
+            )}
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-md">
+          <form onSubmit={handleSubmit}>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="youtube-url">YouTube URL</Label>
+                <Input
+                  id="youtube-url"
+                  type="url"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  value={url}
+                  onChange={handleUrlChange}
+                  className={`${error ? "border-red-500" : ""}`}
+                  disabled={isLoading}
+                />
+                {error && <p className="text-sm text-red-500">{error}</p>}
+                {url && !isValidUrl && (
+                  <p className="text-sm text-yellow-600">
+                    Please enter a valid YouTube URL
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeModal}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={!isValidUrl || isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  "Add video"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

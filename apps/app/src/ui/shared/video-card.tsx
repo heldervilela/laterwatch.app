@@ -205,7 +205,7 @@ export function VideoCard({ video }: VideoCardProps) {
           </div>
 
           {/* Bottom controls - Play button and Action buttons */}
-          <div className="absolute right-4 bottom-4 left-4 flex items-center justify-between opacity-0 transition-all duration-300 group-hover:opacity-100">
+          <div className="absolute right-4 bottom-4 left-4 z-20 flex items-center justify-between opacity-0 transition-all duration-300 group-hover:opacity-100">
             {/* Play button */}
             <div className="rounded-full bg-white/20 p-3 backdrop-blur-sm">
               <Play className="h-6 w-6 fill-white text-white" />

@@ -27,7 +27,7 @@ function AppLayout() {
       <SidebarProvider
         style={
           {
-            "--sidebar-width": "350px",
+            "--sidebar-width": "160px",
           } as React.CSSProperties
         }
       >
