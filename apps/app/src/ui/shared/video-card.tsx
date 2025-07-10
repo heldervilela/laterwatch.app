@@ -182,62 +182,17 @@ export function VideoCard({ video }: VideoCardProps) {
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
 
-          {/* Duration badge */}
-          {video.duration && (
-            <div className="absolute top-3 left-3 rounded-md bg-black/70 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm">
-              {video.duration}
+          {/* Duration and added time badges - hidden on hover */}
+          <div className="absolute top-3 left-3 flex gap-2 transition-all duration-300 group-hover:opacity-0">
+            {video.duration && (
+              <div className="rounded-md bg-black/70 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm">
+                {video.duration}
+              </div>
+            )}
+            <div className="flex items-center gap-1 rounded-md bg-black/70 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm">
+              <Clock className="h-3 w-3" />
+              <span>{formatRelativeTime(video.addedAt)}</span>
             </div>
-          )}
-
-          {/* Action buttons - circular on hover */}
-          <div className="absolute top-3 right-3 flex gap-2 opacity-0 transition-all duration-300 group-hover:opacity-100">
-            {/* Favorite button */}
-            <button
-              onClick={handleToggleFavorite}
-              disabled={toggleFavoriteMutation.isPending}
-              className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-sm transition-all duration-200",
-                isFavorite
-                  ? "bg-red-500/90 text-white hover:bg-red-600/90"
-                  : "bg-white/20 text-white hover:bg-white/30"
-              )}
-              title={isFavorite ? "Remove from favorites" : "Add to favorites"}
-            >
-              <Heart className={cn("h-4 w-4", isFavorite && "fill-current")} />
-            </button>
-
-            {/* Watched button */}
-            <button
-              onClick={handleToggleWatched}
-              disabled={toggleWatchedMutation.isPending}
-              className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-sm transition-all duration-200",
-                isWatched
-                  ? "bg-green-500/90 text-white hover:bg-green-600/90"
-                  : "bg-white/20 text-white hover:bg-white/30"
-              )}
-              title={isWatched ? "Mark as unwatched" : "Mark as watched"}
-            >
-              <Eye className="h-4 w-4" />
-            </button>
-
-            {/* External link button */}
-            <button
-              onClick={handleExternalLink}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-all duration-200 hover:bg-white/30"
-              title="Open in YouTube"
-            >
-              <ExternalLink className="h-4 w-4" />
-            </button>
-
-            {/* Delete button */}
-            <button
-              onClick={handleDeleteClick}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-all duration-200 hover:bg-red-500/90"
-              title="Delete video"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
           </div>
 
           {/* Status indicators */}
@@ -249,10 +204,66 @@ export function VideoCard({ video }: VideoCardProps) {
             )}
           </div>
 
-          {/* Play button overlay - positioned bottom-left on hover */}
-          <div className="absolute bottom-4 left-4 opacity-0 transition-all duration-300 group-hover:opacity-100">
+          {/* Bottom controls - Play button and Action buttons */}
+          <div className="absolute right-4 bottom-4 left-4 flex items-center justify-between opacity-0 transition-all duration-300 group-hover:opacity-100">
+            {/* Play button */}
             <div className="rounded-full bg-white/20 p-3 backdrop-blur-sm">
               <Play className="h-6 w-6 fill-white text-white" />
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex gap-2">
+              {/* Favorite button */}
+              <button
+                onClick={handleToggleFavorite}
+                disabled={toggleFavoriteMutation.isPending}
+                className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-sm transition-all duration-200",
+                  isFavorite
+                    ? "bg-red-500/90 text-white hover:bg-red-600/90"
+                    : "bg-white/20 text-white hover:bg-white/30"
+                )}
+                title={
+                  isFavorite ? "Remove from favorites" : "Add to favorites"
+                }
+              >
+                <Heart
+                  className={cn("h-4 w-4", isFavorite && "fill-current")}
+                />
+              </button>
+
+              {/* Watched button */}
+              <button
+                onClick={handleToggleWatched}
+                disabled={toggleWatchedMutation.isPending}
+                className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-sm transition-all duration-200",
+                  isWatched
+                    ? "bg-green-500/90 text-white hover:bg-green-600/90"
+                    : "bg-white/20 text-white hover:bg-white/30"
+                )}
+                title={isWatched ? "Mark as unwatched" : "Mark as watched"}
+              >
+                <Eye className="h-4 w-4" />
+              </button>
+
+              {/* External link button */}
+              <button
+                onClick={handleExternalLink}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-all duration-200 hover:bg-white/30"
+                title="Open in YouTube"
+              >
+                <ExternalLink className="h-4 w-4" />
+              </button>
+
+              {/* Delete button */}
+              <button
+                onClick={handleDeleteClick}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-all duration-200 hover:bg-red-500/90"
+                title="Delete video"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
             </div>
           </div>
 
@@ -268,14 +279,9 @@ export function VideoCard({ video }: VideoCardProps) {
 
           {/* Content overlay at bottom - hidden on hover */}
           <div className="absolute right-0 bottom-0 left-0 p-4 transition-all duration-300 group-hover:opacity-0">
-            <h3 className="mb-2 truncate text-sm leading-tight font-semibold text-white drop-shadow-md">
+            <h3 className="truncate text-sm leading-tight font-semibold text-white drop-shadow-md">
               {video.title || "Untitled video"}
             </h3>
-
-            <div className="flex items-center gap-1 text-xs text-white/80">
-              <Clock className="h-3 w-3" />
-              <span>{formatRelativeTime(video.addedAt)}</span>
-            </div>
           </div>
         </div>
       </Card>
