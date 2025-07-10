@@ -413,16 +413,14 @@ export function VideoPlayerModal() {
   const WINDOW_SIZES = [
     { width: 800, label: "Large" },
     { width: 500, label: "Medium" },
-    { width: 300, label: "Small" },
   ]
 
   const calculateHeight = useCallback((width: number) => {
-    // YouTube videos are typically 16:9 aspect ratio
-    // Add some padding for window decorations and controls
-    const aspectRatio = 16 / 9
-    const videoHeight = Math.round(width / aspectRatio)
-    const padding = 40 // Account for window decorations
-    return videoHeight + padding
+    // Adjusted aspect ratio for better video proportions with black bars
+    // 800px width -> 455px height, 500px -> 284px, 300px -> 171px
+    const aspectRatio = 1.758 // Slightly more "cinematic" than 16:9 (1.777)
+    const totalHeight = Math.round(width / aspectRatio)
+    return totalHeight
   }, [])
 
   const toggleWindowSize = useCallback(async () => {
@@ -552,7 +550,7 @@ export function VideoPlayerModal() {
     >
       {/* Drag Area - Top bar for moving window */}
       <div
-        className={`absolute top-0 right-20 left-0 z-40 h-12 cursor-move transition-opacity duration-300 ease-in-out ${
+        className={`absolute top-0 right-20 left-0 z-40 h-12 transition-opacity duration-300 ease-in-out ${
           !isPlaying
             ? "bg-black/20 opacity-100" // Slightly visible when paused
             : "opacity-0 group-hover:bg-black/10 group-hover:opacity-100" // Transparent when playing, slightly visible on hover
