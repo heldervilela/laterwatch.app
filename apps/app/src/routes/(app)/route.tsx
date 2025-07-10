@@ -1,6 +1,5 @@
 import { authMiddleware } from "@/routes/-middleware/auth"
 import { SidebarInset, SidebarProvider } from "@/ui/base/sidebar"
-import { DragDropOverlay } from "@/ui/shared/drag-drop-overlay"
 import { createFileRoute, Outlet } from "@tanstack/react-router"
 
 import { FloatingActionButton } from "./-ui/floating-action-button"
@@ -38,7 +37,6 @@ function AppLayout() {
       </SidebarProvider>
 
       <FloatingActionButton />
-      <DragDropOverlay />
     </div>
   )
 }
