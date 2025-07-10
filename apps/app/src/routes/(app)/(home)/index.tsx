@@ -1,7 +1,7 @@
 import { api } from "@/services/api"
 import { useVideoPlayerStore } from "@/stores/video-player-store"
 import { Skeleton } from "@/ui/base/skeleton"
-import { VideoCard } from "@/ui/shared/video-card"
+import { VideoCardCompact } from "@/ui/shared/video-card-compact"
 import { useQuery } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { Video } from "lucide-react"
@@ -100,7 +100,7 @@ function AppDashboard() {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {videos.map((video) => (
-              <VideoCard key={video._id} video={video} />
+              <VideoCardCompact key={video._id} video={video} />
             ))}
           </div>
         )}
