@@ -1,5 +1,5 @@
 import { useVideoPlayerStore } from "@/stores/video-player-store"
-import { ExternalLink, Maximize2, Minimize2, X } from "lucide-react"
+import { Maximize2, Minimize2, X } from "lucide-react"
 import { memo, useCallback, useEffect, useRef, useState } from "react"
 
 import { cn } from "@/lib/utils"
@@ -31,6 +31,7 @@ interface YouTubePlayerProps {
   startSeconds?: number
   onTimeUpdate?: (currentTime: number) => void
   onEnd?: () => void
+  onPlayStateChange?: (isPlaying: boolean) => void
   className?: string
 }
 
@@ -40,6 +41,7 @@ const YouTubePlayer = memo(function YouTubePlayer({
   startSeconds = 0,
   onTimeUpdate,
   onEnd,
+  onPlayStateChange,
   className,
 }: YouTubePlayerProps) {
   const playerRef = useRef<HTMLDivElement>(null)
@@ -50,12 +52,14 @@ const YouTubePlayer = memo(function YouTubePlayer({
   // Use refs to store stable callback references
   const onTimeUpdateRef = useRef(onTimeUpdate)
   const onEndRef = useRef(onEnd)
+  const onPlayStateChangeRef = useRef(onPlayStateChange)
 
   // Update refs when callbacks change
   useEffect(() => {
     onTimeUpdateRef.current = onTimeUpdate
     onEndRef.current = onEnd
-  }, [onTimeUpdate, onEnd])
+    onPlayStateChangeRef.current = onPlayStateChange
+  }, [onTimeUpdate, onEnd, onPlayStateChange])
 
   // Load YouTube API
   useEffect(() => {
@@ -147,9 +151,18 @@ const YouTubePlayer = memo(function YouTubePlayer({
         onStateChange: (event: any) => {
           // YouTube player states:
           // -1: unstarted, 0: ended, 1: playing, 2: paused, 3: buffering, 5: video cued
+          console.log("🎵 YouTube player state changed:", event.data)
+
           if (event.data === 0) {
             // Video ended
             onEndRef.current?.()
+            onPlayStateChangeRef.current?.(false)
+          } else if (event.data === 1) {
+            // Playing
+            onPlayStateChangeRef.current?.(true)
+          } else if (event.data === 2) {
+            // Paused
+            onPlayStateChangeRef.current?.(false)
           }
         },
         onError: (event: any) => {
@@ -175,11 +188,11 @@ const YouTubePlayer = memo(function YouTubePlayer({
     }
   }, [apiLoaded, videoId, startSeconds]) // These should be stable now
 
-  // Add styles to hide YouTube player elements
+  // Add styles to hide YouTube player elements and maximize video area
   useEffect(() => {
     const style = document.createElement("style")
     style.textContent = `
-      /* Hide YouTube player title and info */
+      /* Hide ALL YouTube UI elements except basic video controls */
       .ytp-chrome-top,
       .ytp-show-cards-title,
       .ytp-title,
@@ -197,19 +210,31 @@ const YouTubePlayer = memo(function YouTubePlayer({
       .ytp-settings-button,
       .ytp-pip-button,
       .ytp-fullscreen-button,
-      .ytp-watermark {
-        display: none !important;
-      }
-      
-      /* Hide annotations and info cards */
+      .ytp-watermark,
+      .ytp-endscreen-element,
       .ytp-ce-element,
       .ytp-cards-teaser,
       .ytp-anno,
-      .ytp-anno-list {
+      .ytp-anno-list,
+      .ytp-suggestion-set,
+      .ytp-videowall-still,
+      .ytp-pause-overlay,
+      .ytp-scroll-min,
+      .ytp-chapter-container,
+      .ytp-tooltip,
+      .ytp-bezel,
+      .ytp-gradient-top,
+      .ytp-gradient-bottom {
         display: none !important;
+        visibility: hidden !important;
       }
       
-      /* Keep only basic controls */
+      /* Ensure video fills entire space */
+      .ytp-player-content {
+        background: black !important;
+      }
+      
+      /* Keep only essential playback controls */
       .ytp-left-controls,
       .ytp-right-controls {
         display: flex !important;
@@ -221,6 +246,16 @@ const YouTubePlayer = memo(function YouTubePlayer({
       .ytp-volume-slider-container,
       .ytp-mute-button {
         display: block !important;
+      }
+      
+      /* Hide control bar after inactivity - cleaner full-screen experience */
+      .ytp-autohide .ytp-chrome-bottom {
+        opacity: 0 !important;
+        transition: opacity 0.3s ease !important;
+      }
+      
+      .ytp-autohide:hover .ytp-chrome-bottom {
+        opacity: 1 !important;
       }
     `
     document.head.appendChild(style)
@@ -234,7 +269,7 @@ const YouTubePlayer = memo(function YouTubePlayer({
     <div
       ref={playerRef}
       className={cn("h-full w-full", className)}
-      style={{ minHeight: "400px" }}
+      style={{ height: "100vh", width: "100vw" }}
     ></div>
   )
 })
@@ -247,8 +282,9 @@ export function VideoPlayerModal() {
     updateProgress,
     getProgress,
   } = useVideoPlayerStore()
-  const [isFullscreen, setIsFullscreen] = useState(false)
   const [currentProgress, setCurrentProgress] = useState(0)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false)
   const modalRef = useRef<HTMLDivElement>(null)
 
   // Use refs to store stable references to avoid re-creating callbacks
@@ -326,9 +362,14 @@ export function VideoPlayerModal() {
     }
   }, []) // Empty dependencies - stable function
 
+  // Stable handlePlayStateChange - will NOT cause re-renders
+  const handlePlayStateChange = useCallback((playing: boolean) => {
+    setIsPlaying(playing)
+    console.log("🎵 Play state changed:", playing ? "playing" : "paused")
+  }, []) // Empty dependencies - stable function
+
   const handleClose = useCallback(() => {
     closePlayer()
-    setIsFullscreen(false)
     setCurrentProgress(0)
   }, [closePlayer])
 
@@ -343,16 +384,6 @@ export function VideoPlayerModal() {
       setIsFullscreen(false)
     }
   }, [isFullscreen])
-
-  const handleOpenInYouTube = useCallback(() => {
-    if (currentVideo) {
-      const url =
-        currentProgress > 0
-          ? `${currentVideo.url}&t=${Math.floor(currentProgress)}s`
-          : currentVideo.url
-      window.open(url, "_blank")
-    }
-  }, [currentVideo, currentProgress])
 
   // Handle ESC key
   useEffect(() => {
@@ -392,29 +423,21 @@ export function VideoPlayerModal() {
   return (
     <div
       ref={modalRef}
-      className="fixed inset-0 z-101 flex items-center justify-center bg-black"
+      className="group fixed inset-0 z-101 bg-black"
       onClick={(e) => e.target === e.currentTarget && handleClose()}
     >
-      {/* Header Controls */}
-      <div className="absolute top-4 right-4 left-4 z-10 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <h2 className="max-w-md truncate text-lg font-medium text-white">
-            {currentVideo.title || "Video"}
-          </h2>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleOpenInYouTube}
-            className="rounded p-2 text-white/80 transition-colors hover:bg-white/20 hover:text-white"
-            title="Open in YouTube"
-          >
-            <ExternalLink className="h-5 w-5" />
-          </button>
-
+      {/* Auto-hide Header Controls - Show when paused or on hover when playing */}
+      <div
+        className={`absolute top-0 right-0 z-50 p-4 transition-opacity duration-300 ease-in-out ${
+          !isPlaying
+            ? "opacity-100" // Always visible when paused
+            : "opacity-0 group-hover:opacity-100" // Only on hover when playing
+        }`}
+      >
+        <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/90 p-2 shadow-2xl backdrop-blur-md">
           <button
             onClick={toggleFullscreen}
-            className="rounded p-2 text-white/80 transition-colors hover:bg-white/20 hover:text-white"
+            className="rounded border border-white/20 bg-black/80 p-3 text-white/90 shadow-lg transition-all duration-200 hover:bg-white/20 hover:text-white"
             title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
           >
             {isFullscreen ? (
@@ -426,7 +449,7 @@ export function VideoPlayerModal() {
 
           <button
             onClick={handleClose}
-            className="rounded p-2 text-white/80 transition-colors hover:bg-white/20 hover:text-white"
+            className="rounded border border-white/20 bg-black/80 p-3 text-white/90 shadow-lg transition-all duration-200 hover:border-red-500/50 hover:bg-red-600/80 hover:text-white"
             title="Close player"
           >
             <X className="h-5 w-5" />
@@ -434,14 +457,15 @@ export function VideoPlayerModal() {
         </div>
       </div>
 
-      {/* Video Player */}
-      <div className="mx-4 mt-16 mb-4 h-full max-h-[80vh] w-full max-w-7xl">
+      {/* Video Player - Full Screen */}
+      <div className="h-full w-full">
         <YouTubePlayer
           videoId={videoId}
           startSeconds={initialProgressRef.current}
           onTimeUpdate={handleTimeUpdate}
           onEnd={handleVideoEnd}
-          className="overflow-hidden rounded-lg shadow-2xl"
+          onPlayStateChange={handlePlayStateChange}
+          className="h-full w-full"
         />
       </div>
     </div>
