@@ -1,5 +1,7 @@
+import { api } from "@/services/api"
 import { usePinStore } from "@/stores/pin-store"
 import { useVideoPlayerStore } from "@/stores/video-player-store"
+import { useQueryClient } from "@tanstack/react-query"
 import { Maximize2, Pin, PinOff, X } from "lucide-react"
 import { memo, useCallback, useEffect, useRef, useState } from "react"
 
@@ -284,6 +286,7 @@ export function VideoPlayerModal() {
     getProgress,
   } = useVideoPlayerStore()
   const { isPinned, togglePin } = usePinStore()
+  const queryClient = useQueryClient()
   const [currentProgress, setCurrentProgress] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [sizeIndex, setSizeIndex] = useState(0) // 0=800px, 1=500px, 2=300px
@@ -371,21 +374,35 @@ export function VideoPlayerModal() {
   }, []) // Empty dependencies - stable function
 
   // Stable handleVideoEnd - will NOT cause re-renders
-  const handleVideoEnd = useCallback(() => {
+  const handleVideoEnd = useCallback(async () => {
     const video = currentVideoRef.current
     if (video) {
-      // Reset progress when video ends completely
-      // Only reset if we're near the end to avoid false positives
-      const currentProgressValue = getProgressRef.current(video._id)
-      if (currentProgressValue > 30) {
-        // Only reset if we had significant progress
-        updateProgressRef.current(video._id, 0).catch((error) => {
-          console.warn("Failed to reset progress:", error)
+      try {
+        console.log("🎬 Video ended, marking as watched:", video._id)
+
+        // Mark video as watched in the backend
+        await (api.videos as any).updateVideo.mutate({
+          videoId: video._id,
+          isWatched: true,
         })
+
+        console.log("✅ Video marked as watched successfully")
+
+        // Invalidate video queries to update the feed
+        queryClient.invalidateQueries({ queryKey: ["videos"] })
+
+        // Close the player modal
+        closePlayer()
+        setCurrentProgress(0)
+      } catch (error) {
+        console.error("❌ Failed to mark video as watched:", error)
+
+        // Still close the modal even if the API call fails
+        closePlayer()
         setCurrentProgress(0)
       }
     }
-  }, []) // Empty dependencies - stable function
+  }, [closePlayer, queryClient]) // Add queryClient to dependencies
 
   // Stable handlePlayStateChange - will NOT cause re-renders
   const handlePlayStateChange = useCallback((playing: boolean) => {
@@ -398,7 +415,7 @@ export function VideoPlayerModal() {
     setCurrentProgress(0)
   }, [closePlayer])
 
-  const handleStartDrag = useCallback(async (e: React.MouseEvent) => {
+  const handleStartDrag = useCallback(async () => {
     try {
       // Import Tauri window API dynamically
       const { getCurrentWindow } = await import("@tauri-apps/api/window")
