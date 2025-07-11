@@ -1,3 +1,4 @@
+import { usePinStore } from "@/stores/pin-store"
 import { Button } from "@/ui/base/button"
 import {
   Dialog,
@@ -9,7 +10,7 @@ import { Input } from "@/ui/base/input"
 import { Label } from "@/ui/base/label"
 import { getCurrentWindow } from "@tauri-apps/api/window"
 import { Loader2, Pin, PinOff, Plus } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 
 import { useAddVideo } from "@/hooks/use-add-video"
 
@@ -18,7 +19,7 @@ interface FloatingActionButtonProps {
 }
 
 export function FloatingActionButton({ onClick }: FloatingActionButtonProps) {
-  const [isAlwaysOnTop, setIsAlwaysOnTop] = useState(false)
+  const { isPinned, setPinned, togglePin } = usePinStore()
   const {
     // State
     isModalOpen,
@@ -33,19 +34,19 @@ export function FloatingActionButton({ onClick }: FloatingActionButtonProps) {
     submitVideo,
   } = useAddVideo()
 
-  // Initialize always on top state
+  // Initialize always on top state from Tauri
   useEffect(() => {
     const initAlwaysOnTop = async () => {
       try {
         const appWindow = getCurrentWindow()
         const isOnTop = await appWindow.isAlwaysOnTop()
-        setIsAlwaysOnTop(isOnTop)
+        setPinned(isOnTop)
       } catch (error) {
         console.error("Failed to get always on top state:", error)
       }
     }
     initAlwaysOnTop()
-  }, [])
+  }, [setPinned])
 
   const handleClick = () => {
     if (onClick) {
@@ -63,33 +64,24 @@ export function FloatingActionButton({ onClick }: FloatingActionButtonProps) {
     submitVideo()
   }
 
-  const toggleAlwaysOnTop = async () => {
-    try {
-      const appWindow = getCurrentWindow()
-      const newState = !isAlwaysOnTop
-      await appWindow.setAlwaysOnTop(newState)
-      setIsAlwaysOnTop(newState)
-    } catch (error) {
-      console.error("Failed to toggle always on top:", error)
-    }
+  const handleTogglePin = async () => {
+    await togglePin()
   }
 
   return (
     <>
       {/* Always on top toggle button */}
       <Button
-        onClick={toggleAlwaysOnTop}
+        onClick={handleTogglePin}
         className={`fixed right-4 bottom-20 z-50 h-12 w-12 cursor-pointer rounded-full p-0 shadow-lg transition-all duration-200 hover:shadow-xl ${
-          isAlwaysOnTop
+          isPinned
             ? "bg-blue-500 text-white hover:bg-blue-600"
             : "bg-gray-200 text-gray-700 hover:bg-gray-300"
         }`}
-        aria-label={
-          isAlwaysOnTop ? "Disable always on top" : "Enable always on top"
-        }
-        title={isAlwaysOnTop ? "Disable always on top" : "Enable always on top"}
+        aria-label={isPinned ? "Disable always on top" : "Enable always on top"}
+        title={isPinned ? "Disable always on top" : "Enable always on top"}
       >
-        {isAlwaysOnTop ? (
+        {isPinned ? (
           <Pin className="h-5 w-5" />
         ) : (
           <PinOff className="h-5 w-5" />

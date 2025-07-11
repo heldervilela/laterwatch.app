@@ -1,3 +1,4 @@
+import { usePinStore } from "@/stores/pin-store"
 import { useVideoPlayerStore } from "@/stores/video-player-store"
 import { Maximize2, Pin, PinOff, X } from "lucide-react"
 import { memo, useCallback, useEffect, useRef, useState } from "react"
@@ -282,9 +283,9 @@ export function VideoPlayerModal() {
     updateProgress,
     getProgress,
   } = useVideoPlayerStore()
+  const { isPinned, togglePin } = usePinStore()
   const [currentProgress, setCurrentProgress] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [isPinned, setIsPinned] = useState(false)
   const [sizeIndex, setSizeIndex] = useState(0) // 0=800px, 1=500px, 2=300px
   const modalRef = useRef<HTMLDivElement>(null)
 
@@ -295,6 +296,29 @@ export function VideoPlayerModal() {
 
   // Store initial progress to avoid re-creating player when progress is saved
   const initialProgressRef = useRef<number>(0)
+
+  // Synchronize initial pin state when modal opens
+  useEffect(() => {
+    const syncPinState = async () => {
+      if (isPlayerOpen) {
+        try {
+          const { getCurrentWindow } = await import("@tauri-apps/api/window")
+          const window = getCurrentWindow()
+          const isOnTop = await window.isAlwaysOnTop()
+
+          // Update global state if it doesn't match window state
+          if (isOnTop !== isPinned) {
+            const { usePinStore } = await import("@/stores/pin-store")
+            usePinStore.getState().setPinned(isOnTop)
+          }
+        } catch (error) {
+          console.warn("Failed to sync pin state:", error)
+        }
+      }
+    }
+
+    syncPinState()
+  }, [isPlayerOpen, isPinned])
 
   // Update refs when store values change
   useEffect(() => {
@@ -389,26 +413,9 @@ export function VideoPlayerModal() {
     }
   }, [])
 
-  const togglePin = useCallback(async () => {
-    try {
-      // Import Tauri window API dynamically to avoid issues in development
-      const { getCurrentWindow } = await import("@tauri-apps/api/window")
-      const window = getCurrentWindow()
-
-      const newPinnedState = !isPinned
-      await window.setAlwaysOnTop(newPinnedState)
-      setIsPinned(newPinnedState)
-
-      console.log(
-        "📌 Window pin state changed:",
-        newPinnedState ? "pinned" : "unpinned"
-      )
-    } catch (error) {
-      console.warn("Failed to toggle pin state:", error)
-      // Fallback for development or if Tauri API is not available
-      setIsPinned(!isPinned)
-    }
-  }, [isPinned])
+  const handleTogglePin = useCallback(async () => {
+    await togglePin()
+  }, [togglePin])
 
   const WINDOW_SIZES = [
     { width: 800, label: "Large" },
@@ -569,7 +576,7 @@ export function VideoPlayerModal() {
       >
         <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/90 p-2 shadow-2xl backdrop-blur-md">
           <button
-            onClick={togglePin}
+            onClick={handleTogglePin}
             className={`rounded border p-3 text-white/90 shadow-lg transition-all duration-200 hover:text-white ${
               isPinned
                 ? "border-blue-500/50 bg-blue-600/80 hover:bg-blue-500/80"
