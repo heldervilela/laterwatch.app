@@ -334,3 +334,40 @@ export const getUserUnwatchedVideos = protectedProcedure.query(async ({ ctx }) =
     })
   }
 })
+
+/*
+ * Mark video as watched and clear progress
+ */
+export const markVideoAsWatched = protectedProcedure
+  .input(
+    z.object({
+      videoId: z.string(),
+    })
+  )
+  .mutation(async ({ input, ctx }) => {
+    try {
+      const result = await convexClient.mutation(api.db.videos.markVideoAsWatched, {
+        videoId: input.videoId as Id<'videos'>,
+        userId: ctx.user.id,
+      })
+
+      if (!result.success) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: result.messageKey || 'videos.errors.markWatchedFailed',
+        })
+      }
+
+      return {
+        success: true,
+        message: 'videos.success.markedAsWatched',
+        video: result.video,
+      }
+    } catch (error) {
+      console.error('[API][MarkVideoAsWatched] Error:', error)
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'videos.errors.serverError',
+      })
+    }
+  })

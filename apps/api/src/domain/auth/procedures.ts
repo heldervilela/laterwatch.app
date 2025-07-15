@@ -8,7 +8,7 @@ import { refreshTokenSchema, sendCodeSchema, verifyCodeSchema } from './schemas'
  */
 export const sendVerificationCode = publicProcedure
   .input(sendCodeSchema)
-  .mutation(async ({ input, ctx }) => {
+  .mutation(async ({ input, ctx: _ctx }) => {
     console.log('[API][SendVerificationCode] Starting with input:', input.email)
     const result = await authService.sendVerificationCode(input.email)
 
@@ -32,7 +32,7 @@ export const sendVerificationCode = publicProcedure
  */
 export const verifyCode = publicProcedure
   .input(verifyCodeSchema)
-  .mutation(async ({ input, ctx }) => {
+  .mutation(async ({ input, ctx: _ctx }) => {
     console.log('[API][VerifyCode] Starting with input:', {
       email: input.email,
       code: input.code,
@@ -61,7 +61,7 @@ export const verifyCode = publicProcedure
  */
 export const refreshToken = publicProcedure
   .input(refreshTokenSchema)
-  .mutation(async ({ input, ctx }) => {
+  .mutation(async ({ input, ctx: _ctx }) => {
     console.log('[API][RefreshToken] Starting')
     const result = await authService.refreshAccessToken(input.refreshToken)
 
@@ -83,22 +83,24 @@ export const refreshToken = publicProcedure
 /*
  * Logout
  */
-export const logout = publicProcedure.input(refreshTokenSchema).mutation(async ({ input, ctx }) => {
-  console.log('[API][Logout] Starting with input:', {
-    refreshToken: input.refreshToken,
-  })
-  try {
-    await authService.logout(input.refreshToken)
-
-    return {
-      success: true,
-      message: 'auth.success.logoutSuccess',
-    }
-  } catch (error) {
-    console.error('[API][Logout] Error:', error)
-    throw new TRPCError({
-      code: 'INTERNAL_SERVER_ERROR',
-      message: 'auth.errors.serverError',
+export const logout = publicProcedure
+  .input(refreshTokenSchema)
+  .mutation(async ({ input, ctx: _ctx }) => {
+    console.log('[API][Logout] Starting with input:', {
+      refreshToken: input.refreshToken,
     })
-  }
-})
+    try {
+      await authService.logout(input.refreshToken)
+
+      return {
+        success: true,
+        message: 'auth.success.logoutSuccess',
+      }
+    } catch (error) {
+      console.error('[API][Logout] Error:', error)
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'auth.errors.serverError',
+      })
+    }
+  })

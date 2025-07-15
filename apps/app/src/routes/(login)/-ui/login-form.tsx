@@ -1,78 +1,84 @@
-import { cn } from "@/lib/utils";
-import { api, tokenManager } from "@/services/api";
-import { BrandIconSmall } from "@/ui/assets/brand-icon-small";
-import { GoogleIcon } from "@/ui/assets/google-icon";
-import { Button } from "@/ui/base/button";
-import { Input } from "@/ui/base/input";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/ui/base/input-otp";
-import { Label } from "@/ui/base/label";
-import { Link, useRouter } from "@tanstack/react-router";
-import { REGEXP_ONLY_DIGITS } from "input-otp";
-import { useState } from "react";
+import { api, tokenManager } from "@/services/api"
+import { BrandIconSmall } from "@/ui/assets/brand-icon-small"
+import { GoogleIcon } from "@/ui/assets/google-icon"
+import { Button } from "@/ui/base/button"
+import { Input } from "@/ui/base/input"
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/ui/base/input-otp"
+import { Label } from "@/ui/base/label"
+import { Link, useRouter } from "@tanstack/react-router"
+import { REGEXP_ONLY_DIGITS } from "input-otp"
+import { useState } from "react"
+
+import { cn } from "@/lib/utils"
 
 export function LoginForm({
   className,
   form,
   ...props
 }: React.ComponentProps<"div"> & { form: "login" | "signup" }) {
-  const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
-  const [step, setStep] = useState<"email" | "code">("email");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+  const [email, setEmail] = useState("")
+  const [code, setCode] = useState("")
+  const [step, setStep] = useState<"email" | "code">("email")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
   const handleSendCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
 
     try {
-      const response = await api.auth.sendVerificationCode.mutate({ email });
+      const response = await (api.auth as any).sendVerificationCode.mutate({
+        email,
+      })
 
       if (response.success) {
-        setStep("code");
+        setStep("code")
       } else {
-        setError(response.message || "Error sending code");
+        setError(response.message || "Error sending code")
       }
     } catch (error: any) {
-      console.error("[Error][Login] Error sending verification code:", error);
-      setError(error.message || "Error sending verification code");
+      console.error("[Error][Login] Error sending verification code:", error)
+      setError(error.message || "Error sending verification code")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleVerifyCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
 
     try {
-      const response = await api.auth.verifyCode.mutate({ email, code });
+      const response = await (api.auth as any).verifyCode.mutate({
+        email,
+        code,
+      })
 
       if (response.success && response.tokens) {
         tokenManager.setTokens(
           response.tokens.accessToken,
-          response.tokens.refreshToken,
-        );
-        router.navigate({ to: "/" });
+          response.tokens.refreshToken
+        )
+        router.navigate({ to: "/" })
       } else {
-        setError(response.message || "Invalid code");
+        setError(response.message || "Invalid code")
       }
     } catch (error: any) {
-      console.error("[Error][Login] Error verifying code:", error);
-      setError(error.message || "Error verifying code");
+      console.error("[Error][Login] Error verifying code:", error)
+      setError(error.message || "Error verifying code")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleBack = () => {
-    setStep("email");
-    setCode("");
-    setError(null);
-  };
+    setStep("email")
+    setCode("")
+    setError(null)
+  }
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -107,7 +113,7 @@ export function LoginForm({
                   />
                 </div>
                 {error && (
-                  <div className="text-sm text-red-500 text-center">
+                  <div className="text-center text-sm text-red-500">
                     {error}
                   </div>
                 )}
@@ -179,11 +185,11 @@ export function LoginForm({
                   </InputOTP>
                 </div>
                 {error && (
-                  <div className="text-sm text-red-500 text-center">
+                  <div className="text-center text-sm text-red-500">
                     {error}
                   </div>
                 )}
-                <div className="flex gap-3 w-full">
+                <div className="flex w-full gap-3">
                   <Button
                     type="button"
                     variant="outline"
@@ -213,5 +219,5 @@ export function LoginForm({
         </>
       )}
     </div>
-  );
+  )
 }

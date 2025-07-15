@@ -408,3 +408,45 @@ export const updateVideoProgress = mutation({
     }
   },
 })
+
+/*
+ * Mark video as watched and clear progress
+ */
+export const markVideoAsWatched = mutation({
+  args: {
+    videoId: v.id('videos'),
+    userId: v.id('users'),
+  },
+  handler: async (ctx, args) => {
+    try {
+      // Check if video exists and belongs to user
+      const video = await ctx.db.get(args.videoId)
+      if (!video || video.userId !== args.userId) {
+        return {
+          success: false,
+          messageKey: 'videos.errors.notFound',
+        }
+      }
+
+      // Mark as watched and clear progress
+      await ctx.db.patch(args.videoId, {
+        isWatched: true,
+        watchedAt: Date.now(),
+        progress: 0, // Clear progress when marking as watched
+      })
+
+      const updatedVideo = await ctx.db.get(args.videoId)
+
+      return {
+        success: true,
+        video: updatedVideo,
+      }
+    } catch (error) {
+      console.error('[Convex][MarkVideoAsWatched] Error:', error)
+      return {
+        success: false,
+        messageKey: 'videos.errors.markWatchedFailed',
+      }
+    }
+  },
+})
