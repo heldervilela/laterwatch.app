@@ -3,7 +3,14 @@ import { usePinStore } from "@/stores/pin-store"
 import { useVideoPlayerStore } from "@/stores/video-player-store"
 import { useQueryClient } from "@tanstack/react-query"
 import { Maximize2, Pin, PinOff, X } from "lucide-react"
-import { memo, useCallback, useEffect, useRef, useState } from "react"
+import {
+  forwardRef,
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react"
 
 import { cn } from "@/lib/utils"
 
@@ -39,163 +46,210 @@ interface YouTubePlayerProps {
 }
 
 // Memoized YouTubePlayer component to prevent unnecessary re-renders
-const YouTubePlayer = memo(function YouTubePlayer({
-  videoId,
-  startSeconds = 0,
-  onTimeUpdate,
-  onEnd,
-  onPlayStateChange,
-  className,
-}: YouTubePlayerProps) {
-  const playerRef = useRef<HTMLDivElement>(null)
-  const ytPlayerRef = useRef<any>(null)
-  const progressIntervalRef = useRef<NodeJS.Timeout>()
-  const [apiLoaded, setApiLoaded] = useState(false)
-
-  // Use refs to store stable callback references
-  const onTimeUpdateRef = useRef(onTimeUpdate)
-  const onEndRef = useRef(onEnd)
-  const onPlayStateChangeRef = useRef(onPlayStateChange)
-
-  // Update refs when callbacks change
-  useEffect(() => {
-    onTimeUpdateRef.current = onTimeUpdate
-    onEndRef.current = onEnd
-    onPlayStateChangeRef.current = onPlayStateChange
-  }, [onTimeUpdate, onEnd, onPlayStateChange])
-
-  // Load YouTube API
-  useEffect(() => {
-    if (window.YT && window.YT.Player) {
-      setApiLoaded(true)
-      return
-    }
-
-    // Load YouTube IFrame API
-    const tag = document.createElement("script")
-    tag.src = "https://www.youtube.com/iframe_api"
-    const firstScriptTag = document.getElementsByTagName("script")[0]
-    firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag)
-
-    // Set up API ready callback
-    window.onYouTubeIframeAPIReady = () => {
-      setApiLoaded(true)
-    }
-
-    return () => {
-      // Cleanup
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current)
-      }
-    }
-  }, [])
-
-  // Initialize YouTube player when API is loaded
-  useEffect(() => {
-    console.log("🔄 YouTubePlayer useEffect triggered", {
-      apiLoaded,
+const YouTubePlayer = memo(
+  forwardRef<HTMLDivElement, YouTubePlayerProps>(function YouTubePlayer(
+    {
       videoId,
-      startSeconds,
-      timestamp: Date.now(),
-    })
+      startSeconds = 0,
+      onTimeUpdate,
+      onEnd,
+      onPlayStateChange,
+      className,
+    },
+    ref
+  ) {
+    const playerRef = useRef<HTMLDivElement>(null)
+    const ytPlayerRef = useRef<any>(null)
+    const progressIntervalRef = useRef<NodeJS.Timeout>()
+    const [apiLoaded, setApiLoaded] = useState(false)
 
-    if (!apiLoaded || !playerRef.current) return
+    // Use refs to store stable callback references
+    const onTimeUpdateRef = useRef(onTimeUpdate)
+    const onEndRef = useRef(onEnd)
+    const onPlayStateChangeRef = useRef(onPlayStateChange)
 
-    const playerId = `youtube-player-${videoId}-${Date.now()}`
-    playerRef.current.id = playerId
+    // Update refs when callbacks change
+    useEffect(() => {
+      onTimeUpdateRef.current = onTimeUpdate
+      onEndRef.current = onEnd
+      onPlayStateChangeRef.current = onPlayStateChange
+    }, [onTimeUpdate, onEnd, onPlayStateChange])
 
-    console.log("🎬 Creating new YouTube player", {
-      playerId,
-      videoId,
-      startSeconds,
-      timestamp: Date.now(),
-    })
-
-    ytPlayerRef.current = new window.YT.Player(playerId, {
-      videoId: videoId,
-      playerVars: {
-        autoplay: 1,
-        start: Math.floor(startSeconds),
-        enablejsapi: 1,
-        rel: 0,
-        modestbranding: 1,
-        fs: 1,
-        cc_load_policy: 1,
-        origin: window.location.origin,
-        showinfo: 0,
-        iv_load_policy: 3,
-        disablekb: 1,
-        controls: 1,
-        autohide: 1,
-        playsinline: 1,
-        widget_referrer: window.location.origin,
-      },
-      events: {
-        onReady: () => {
-          console.log("✅ YouTube player ready - NO MORE RELOADS EXPECTED", {
-            videoId,
-            startSeconds,
-            timestamp: Date.now(),
-          })
-          // Start progress tracking
-          progressIntervalRef.current = setInterval(() => {
-            if (ytPlayerRef.current && ytPlayerRef.current.getCurrentTime) {
-              try {
-                const currentTime = ytPlayerRef.current.getCurrentTime()
-                if (currentTime > 0) {
-                  onTimeUpdateRef.current?.(currentTime)
-                }
-              } catch (e) {
-                console.warn("Error getting current time:", e)
-              }
-            }
-          }, 1000)
-        },
-        onStateChange: (event: any) => {
-          // YouTube player states:
-          // -1: unstarted, 0: ended, 1: playing, 2: paused, 3: buffering, 5: video cued
-          console.log("🎵 YouTube player state changed:", event.data)
-
-          if (event.data === 0) {
-            // Video ended
-            onEndRef.current?.()
-            onPlayStateChangeRef.current?.(false)
-          } else if (event.data === 1) {
-            // Playing
-            onPlayStateChangeRef.current?.(true)
-          } else if (event.data === 2) {
-            // Paused
-            onPlayStateChangeRef.current?.(false)
-          }
-        },
-        onError: (event: any) => {
-          console.error("YouTube player error:", event.data)
-        },
-      },
-    })
-
-    return () => {
-      console.log(
-        "🧹 Cleaning up YouTube player - THIS SHOULD NOT HAPPEN DURING PLAYBACK",
-        {
-          videoId,
-          timestamp: Date.now(),
+    // Add skip functionality
+    const skipForward = useCallback((seconds: number = 30) => {
+      if (ytPlayerRef.current && ytPlayerRef.current.getCurrentTime) {
+        try {
+          const currentTime = ytPlayerRef.current.getCurrentTime()
+          const duration = ytPlayerRef.current.getDuration()
+          const newTime = Math.min(currentTime + seconds, duration)
+          ytPlayerRef.current.seekTo(newTime, true)
+          console.log(
+            `⏭️ Skipped forward ${seconds}s: ${currentTime}s → ${newTime}s`
+          )
+        } catch (e) {
+          console.warn("Error skipping forward:", e)
         }
-      )
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current)
       }
-      if (ytPlayerRef.current && ytPlayerRef.current.destroy) {
-        ytPlayerRef.current.destroy()
-      }
-    }
-  }, [apiLoaded, videoId, startSeconds]) // These should be stable now
+    }, [])
 
-  // Add styles to hide YouTube player elements and maximize video area
-  useEffect(() => {
-    const style = document.createElement("style")
-    style.textContent = `
-      /* Hide ALL YouTube UI elements except basic video controls */
+    const skipBackward = useCallback((seconds: number = 30) => {
+      if (ytPlayerRef.current && ytPlayerRef.current.getCurrentTime) {
+        try {
+          const currentTime = ytPlayerRef.current.getCurrentTime()
+          const newTime = Math.max(currentTime - seconds, 0)
+          ytPlayerRef.current.seekTo(newTime, true)
+          console.log(
+            `⏮️ Skipped backward ${seconds}s: ${currentTime}s → ${newTime}s`
+          )
+        } catch (e) {
+          console.warn("Error skipping backward:", e)
+        }
+      }
+    }, [])
+
+    // Expose skip functions to parent component
+    useEffect(() => {
+      const element = (ref as any)?.current || playerRef.current
+      if (element) {
+        // Add skip functions so parent can access them
+        element.skipForward = skipForward
+        element.skipBackward = skipBackward
+      }
+    }, [skipForward, skipBackward, ref])
+
+    // Load YouTube API
+    useEffect(() => {
+      if (window.YT && window.YT.Player) {
+        setApiLoaded(true)
+        return
+      }
+
+      // Load YouTube IFrame API
+      const tag = document.createElement("script")
+      tag.src = "https://www.youtube.com/iframe_api"
+      const firstScriptTag = document.getElementsByTagName("script")[0]
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag)
+
+      // Set up API ready callback
+      window.onYouTubeIframeAPIReady = () => {
+        setApiLoaded(true)
+      }
+
+      return () => {
+        // Cleanup
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current)
+        }
+      }
+    }, [])
+
+    // Initialize YouTube player when API is loaded
+    useEffect(() => {
+      console.log("🔄 YouTubePlayer useEffect triggered", {
+        apiLoaded,
+        videoId,
+        startSeconds,
+        timestamp: Date.now(),
+      })
+
+      const element = (ref as any)?.current || playerRef.current
+      if (!apiLoaded || !element) return
+
+      const playerId = `youtube-player-${videoId}-${Date.now()}`
+      element.id = playerId
+
+      console.log("🎬 Creating new YouTube player", {
+        playerId,
+        videoId,
+        startSeconds,
+        timestamp: Date.now(),
+      })
+
+      ytPlayerRef.current = new window.YT.Player(playerId, {
+        videoId: videoId,
+        playerVars: {
+          autoplay: 1,
+          start: Math.floor(startSeconds),
+          enablejsapi: 1,
+          rel: 0,
+          modestbranding: 1,
+          fs: 1,
+          cc_load_policy: 1,
+          origin: window.location.origin,
+          showinfo: 0,
+          iv_load_policy: 3,
+          // Removed disablekb: 1 to enable native YouTube keyboard shortcuts
+          controls: 1,
+          autohide: 1,
+          playsinline: 1,
+          widget_referrer: window.location.origin,
+        },
+        events: {
+          onReady: () => {
+            console.log("✅ YouTube player ready - NO MORE RELOADS EXPECTED", {
+              videoId,
+              startSeconds,
+              timestamp: Date.now(),
+            })
+            // Start progress tracking
+            progressIntervalRef.current = setInterval(() => {
+              if (ytPlayerRef.current && ytPlayerRef.current.getCurrentTime) {
+                try {
+                  const currentTime = ytPlayerRef.current.getCurrentTime()
+                  if (currentTime > 0) {
+                    onTimeUpdateRef.current?.(currentTime)
+                  }
+                } catch (e) {
+                  console.warn("Error getting current time:", e)
+                }
+              }
+            }, 1000)
+          },
+          onStateChange: (event: any) => {
+            // YouTube player states:
+            // -1: unstarted, 0: ended, 1: playing, 2: paused, 3: buffering, 5: video cued
+            console.log("🎵 YouTube player state changed:", event.data)
+
+            if (event.data === 0) {
+              // Video ended
+              onEndRef.current?.()
+              onPlayStateChangeRef.current?.(false)
+            } else if (event.data === 1) {
+              // Playing
+              onPlayStateChangeRef.current?.(true)
+            } else if (event.data === 2) {
+              // Paused
+              onPlayStateChangeRef.current?.(false)
+            }
+          },
+          onError: (event: any) => {
+            console.error("YouTube player error:", event.data)
+          },
+        },
+      })
+
+      return () => {
+        console.log(
+          "🧹 Cleaning up YouTube player - THIS SHOULD NOT HAPPEN DURING PLAYBACK",
+          {
+            videoId,
+            timestamp: Date.now(),
+          }
+        )
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current)
+        }
+        if (ytPlayerRef.current && ytPlayerRef.current.destroy) {
+          ytPlayerRef.current.destroy()
+        }
+      }
+    }, [apiLoaded, videoId, startSeconds, ref]) // These should be stable now
+
+    // Add styles to hide YouTube player elements and maximize video area
+    useEffect(() => {
+      const style = document.createElement("style")
+      style.textContent = `
+      /* Hide most YouTube UI elements except basic video controls */
       .ytp-chrome-top,
       .ytp-show-cards-title,
       .ytp-title,
@@ -225,11 +279,17 @@ const YouTubePlayer = memo(function YouTubePlayer({
       .ytp-scroll-min,
       .ytp-chapter-container,
       .ytp-tooltip,
-      .ytp-bezel,
       .ytp-gradient-top,
       .ytp-gradient-bottom {
         display: none !important;
         visibility: hidden !important;
+      }
+      
+      /* Allow skip buttons and other interactive elements */
+      .ytp-bezel,
+      .ytp-bezel-text {
+        display: block !important;
+        visibility: visible !important;
       }
       
       /* Ensure video fills entire space */
@@ -261,21 +321,22 @@ const YouTubePlayer = memo(function YouTubePlayer({
         opacity: 1 !important;
       }
     `
-    document.head.appendChild(style)
+      document.head.appendChild(style)
 
-    return () => {
-      document.head.removeChild(style)
-    }
-  }, [])
+      return () => {
+        document.head.removeChild(style)
+      }
+    }, [])
 
-  return (
-    <div
-      ref={playerRef}
-      className={cn("h-full w-full", className)}
-      style={{ height: "100vh", width: "100vw" }}
-    ></div>
-  )
-})
+    return (
+      <div
+        ref={ref || playerRef}
+        className={cn("h-full w-full", className)}
+        style={{ height: "100vh", width: "100vw" }}
+      ></div>
+    )
+  })
+)
 
 export function VideoPlayerModal() {
   const {
@@ -291,6 +352,7 @@ export function VideoPlayerModal() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [sizeIndex, setSizeIndex] = useState(0) // 0=800px, 1=500px, 2=300px
   const modalRef = useRef<HTMLDivElement>(null)
+  const playerElementRef = useRef<HTMLDivElement>(null)
 
   // Use refs to store stable references to avoid re-creating callbacks
   const currentVideoRef = useRef(currentVideo)
@@ -542,11 +604,69 @@ export function VideoPlayerModal() {
     }
   }, [isPlayerOpen])
 
-  // Handle ESC key
+  // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isPlayerOpen) {
+      if (!isPlayerOpen) return
+
+      // ESC to close
+      if (e.key === "Escape") {
         handleClose()
+        return
+      }
+
+      // Skip shortcuts (additional to native YouTube shortcuts)
+      // Don't interfere if user is typing in an input field
+      const target = e.target as HTMLElement
+      if (
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.contentEditable === "true"
+      ) {
+        return
+      }
+
+      switch (e.key) {
+        case "ArrowRight":
+          // Right arrow: skip forward 10s (native YouTube behavior)
+          // We could add custom behavior here if needed
+          break
+        case "ArrowLeft":
+          // Left arrow: skip backward 10s (native YouTube behavior)
+          // We could add custom behavior here if needed
+          break
+        case "l":
+        case "L":
+          // L key: skip forward 10s (native YouTube behavior)
+          // We could add custom behavior here if needed
+          break
+        case "j":
+        case "J":
+          // J key: skip backward 10s (native YouTube behavior)
+          // We could add custom behavior here if needed
+          break
+        case ".":
+          // Period: skip forward 30s (custom)
+          e.preventDefault()
+          if (
+            playerElementRef.current &&
+            (playerElementRef.current as any).skipForward
+          ) {
+            ;(playerElementRef.current as any).skipForward(30)
+          }
+          break
+        case ",":
+          // Comma: skip backward 30s (custom)
+          e.preventDefault()
+          if (
+            playerElementRef.current &&
+            (playerElementRef.current as any).skipBackward
+          ) {
+            ;(playerElementRef.current as any).skipBackward(30)
+          }
+          break
+        default:
+          break
       }
     }
 
@@ -629,6 +749,7 @@ export function VideoPlayerModal() {
       {/* Video Player - Full Screen */}
       <div className="h-full w-full">
         <YouTubePlayer
+          ref={playerElementRef}
           videoId={videoId}
           startSeconds={initialProgressRef.current}
           onTimeUpdate={handleTimeUpdate}
