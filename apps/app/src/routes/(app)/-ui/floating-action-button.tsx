@@ -9,8 +9,8 @@ import {
 import { Input } from "@/ui/base/input"
 import { Label } from "@/ui/base/label"
 import { getCurrentWindow } from "@tauri-apps/api/window"
-import { Loader2, Pin, PinOff, Plus } from "lucide-react"
-import { useEffect } from "react"
+import { Filter, Loader2, Pin, PinOff, Plus } from "lucide-react"
+import { useEffect, useState } from "react"
 
 import { useAddVideo } from "@/hooks/use-add-video"
 
@@ -20,6 +20,7 @@ interface FloatingActionButtonProps {
 
 export function FloatingActionButton({ onClick }: FloatingActionButtonProps) {
   const { isPinned, setPinned, togglePin } = usePinStore()
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false)
   const {
     // State
     isModalOpen,
@@ -68,8 +69,85 @@ export function FloatingActionButton({ onClick }: FloatingActionButtonProps) {
     await togglePin()
   }
 
+  const handleToggleFilters = () => {
+    setIsFiltersOpen(!isFiltersOpen)
+  }
+
   return (
     <>
+      {/* Tags and Filters button */}
+      <Dialog open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
+        <DialogTrigger asChild>
+          <Button
+            onClick={handleToggleFilters}
+            className="fixed right-4 bottom-36 z-50 h-12 w-12 cursor-pointer rounded-full bg-purple-500 p-0 text-white shadow-lg transition-all duration-200 hover:bg-purple-600 hover:shadow-xl"
+            aria-label="Tags and Filters"
+            title="Tags and Filters"
+          >
+            <Filter className="h-5 w-5" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-md">
+          <div className="grid gap-4 py-4">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Tags & Filters</h3>
+
+              {/* Tags section */}
+              <div className="space-y-2">
+                <Label>Tags</Label>
+                <div className="text-sm text-gray-600">
+                  Tags functionality coming soon...
+                </div>
+              </div>
+
+              {/* Filters section */}
+              <div className="space-y-2">
+                <Label>Filters</Label>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" id="favorites" className="rounded" />
+                    <label htmlFor="favorites" className="text-sm">
+                      Show only favorites
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" id="unwatched" className="rounded" />
+                    <label htmlFor="unwatched" className="text-sm">
+                      Show only unwatched
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input type="checkbox" id="watched" className="rounded" />
+                    <label htmlFor="watched" className="text-sm">
+                      Show only watched
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsFiltersOpen(false)}
+            >
+              Close
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                // TODO: Apply filters
+                setIsFiltersOpen(false)
+              }}
+            >
+              Apply Filters
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Always on top toggle button */}
       <Button
         onClick={handleTogglePin}
