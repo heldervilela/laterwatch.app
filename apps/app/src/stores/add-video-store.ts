@@ -1,6 +1,8 @@
 import { api } from "@/services/api"
 import { create } from "zustand"
 
+import { validateYouTubeUrl } from "@/lib/utils"
+
 // Types
 interface AddVideoState {
   // Modal state
@@ -23,13 +25,6 @@ interface AddVideoState {
   validateUrl: (url: string) => boolean
   submitVideo: () => Promise<boolean>
   reset: () => void
-}
-
-// YouTube URL validation
-const validateYouTubeUrl = (url: string): boolean => {
-  const youtubeRegex =
-    /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9_-]{11}$/
-  return youtubeRegex.test(url)
 }
 
 // Store implementation

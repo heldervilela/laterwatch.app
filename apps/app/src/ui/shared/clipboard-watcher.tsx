@@ -3,17 +3,11 @@
 import { useEffect } from "react"
 import { toast } from "sonner"
 
+import { validateYouTubeUrl } from "@/lib/utils"
 import { useAddVideo } from "@/hooks/use-add-video"
 
 export function ClipboardWatcher() {
   const { submitVideo, setUrl, isLoading } = useAddVideo()
-
-  // YouTube URL validation regex
-  const validateYouTubeUrl = (url: string): boolean => {
-    const youtubeRegex =
-      /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9_-]{11}/
-    return youtubeRegex.test(url)
-  }
 
   // Extract URL from pasted text
   const extractUrl = (text: string): string | null => {
